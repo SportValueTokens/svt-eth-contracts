@@ -1,82 +1,172 @@
-pragma solidity ^0.4.18;
+pragma solidity 0.4.24;
 
-import "./SportTradeCoin.sol";
-import "./library/SafeMath.sol";
+import "./ERC20.sol";
+import "./SafeMath.sol";
+import "./SafeERC20.sol";
 
+
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale,
+ * allowing investors to purchase tokens with ether. This contract implements
+ * such functionality in its most fundamental form and can be extended to provide additional
+ * functionality and/or custom behavior.
+ * The external interface represents the basic interface for purchasing tokens, and conform
+ * the base architecture for crowdsales. They are *not* intended to be modified / overridden.
+ * The internal interface conforms the extensible and modifiable surface of crowdsales. Override
+ * the methods to add functionality. Consider using 'super' where appropriate to concatenate
+ * behavior.
+ */
 contract Crowdsale {
   using SafeMath for uint256;
+  using SafeERC20 for ERC20;
 
-  SportTradeCoin tokenContract;
-  bool public ended = false;
-  uint256 internal refundAmount = 0;
-  uint256 constant MAX_CONTRIBUTION = 5000 ether;
-  uint256 constant MIN_CONTRIBUTION = 0.1 ether;
-  address owner;
-  address fundsAccount;
-  uint256 public constant pricePerToken = 500000000;  // (wei per DDT)
-  uint256 public tokensAvailable = 12 * (10 ** (6+18));  // 12M tokens
+  // The token being sold
+  ERC20 public token;
 
-  event LogRefund(uint256 _amount);
-  event LogEnded(bool _soldOut);
-  event LogContribution(uint256 _amount, uint256 _tokensPurchased);
+  // Address where funds are collected
+  address public wallet;
 
-  modifier notEnded() {
-    require(!ended);
-    _;
+  // How many token units a buyer gets per wei.
+  // The rate is the conversion between wei and the smallest and indivisible token unit.
+  // So, if you are using a rate of 1 with a DetailedERC20 token with 3 decimals called TOK
+  // 1 wei will give you 1 unit, or 0.001 TOK.
+  uint256 public rate;
+
+  // Amount of wei raised
+  uint256 public weiRaised;
+
+  /**
+   * Event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(
+    address indexed purchaser,
+    address indexed beneficiary,
+    uint256 value,
+    uint256 amount
+  );
+
+  /**
+   * @param _rate Number of token units a buyer gets per wei
+   * @param _wallet Address where collected funds will be forwarded to
+   * @param _token Address of the token being sold
+   */
+  constructor(uint256 _rate, address _wallet, ERC20 _token) public {
+    require(_rate > 0);
+    require(_wallet != address(0));
+    require(_token != address(0));
+
+    rate = _rate;
+    wallet = _wallet;
+    token = _token;
   }
 
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
+  /**
+   * @dev fallback function ***DO NOT OVERRIDE***
+   */
+  function() external payable {
+    buyTokens(msg.sender);
   }
 
-  function Crowdsale(address _tokenContractAddress, address _fundsAccount) public {
-    fundsAccount = _fundsAccount;
-    owner = msg.sender;
-    tokenContract = SportTradeCoin(_tokenContractAddress);
+  /**
+   * @dev low level token purchase ***DO NOT OVERRIDE***
+   * @param _beneficiary Address performing the token purchase
+   */
+  function buyTokens(address _beneficiary) public payable {
+
+    uint256 weiAmount = msg.value;
+    _preValidatePurchase(_beneficiary, weiAmount);
+
+    // calculate token amount to be created
+    uint256 tokens = _getTokenAmount(weiAmount);
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    _processPurchase(_beneficiary, tokens);
+    emit TokenPurchase(
+      msg.sender,
+      _beneficiary,
+      weiAmount,
+      tokens
+    );
+
+    _updatePurchasingState(_beneficiary, weiAmount);
+
+    _forwardFunds();
+    _postValidatePurchase(_beneficiary, weiAmount);
   }
 
-  /// @dev Fallback function, this allows users to purchase tokens by simply sending ETH to the
-  /// contract; they will however need to specify a higher amount of gas than the default (21000)
-  function() notEnded payable public {
-    require(msg.value >= MIN_CONTRIBUTION && msg.value <= MAX_CONTRIBUTION);
-
-    uint256 tokensPurchased = msg.value.div(pricePerToken);
-
-    if (tokensPurchased > tokensAvailable) {
-      ended = true;
-      LogEnded(true);
-      refundAmount = (tokensPurchased - tokensAvailable) * pricePerToken;
-      tokensPurchased = tokensAvailable;
-    }
-
-    tokensAvailable -= tokensPurchased;
-
-    //Refund the difference
-    if (ended && refundAmount > 0) {
-      uint256 toRefund = refundAmount;
-      refundAmount = 0;
-      // reentry should not be possible
-      msg.sender.transfer(toRefund);
-      LogRefund(toRefund);
-    }
-
-    LogContribution(msg.value, tokensPurchased);
-
-    tokenContract.transfer(msg.sender, tokensPurchased);
-
-    fundsAccount.transfer(msg.value - toRefund);
+  /**
+   * @dev Validation of an incoming purchase.
+   * Use require statements to revert state when conditions are not met.
+   * Use `super` in contracts that inherit from Crowdsale to extend their validations.
+   * Example from CappedCrowdsale.sol's _preValidatePurchase method:
+   *   super._preValidatePurchase(_beneficiary, _weiAmount);
+   *   require(weiRaised.add(_weiAmount) <= cap);
+   * @param _beneficiary Address performing the token purchase
+   * @param _weiAmount Value in wei involved in the purchase
+   */
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+    require(_beneficiary != address(0));
+    require(_weiAmount != 0);
   }
 
-  /// @dev Ends the crowdsale and withdraws any remaining tokens
-  /// @param _to Address to withdraw the tokens to
-  function withdrawTokens(address _to) onlyOwner public {
-    require(_to != address(0));
-    if (!ended) {
-      LogEnded(false);
-    }
-    ended = true;
+  /**
+   * @dev Validation of an executed purchase.
+   * Observe state and use revert statements to undo rollback when valid conditions are not met.
+   * @param _beneficiary Address performing the token purchase
+   * @param _weiAmount Value in wei involved in the purchase
+   */
+  function _postValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+    // optional override
+  }
 
-    tokenContract.transfer(_to, tokensAvailable);
+  /**
+   * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its
+   * tokens.
+   * @param _beneficiary Address performing the token purchase
+   * @param _tokenAmount Number of tokens to be emitted
+   */
+  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
+    token.safeTransfer(_beneficiary, _tokenAmount);
+  }
+
+  /**
+   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
+   * @param _beneficiary Address receiving the tokens
+   * @param _tokenAmount Number of tokens to be purchased
+   */
+  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+    _deliverTokens(_beneficiary, _tokenAmount);
+  }
+
+  /**
+   * @dev Override for extensions that require an internal state to check for validity(current user contributions, etc.)
+   * @param _beneficiary Address receiving the tokens
+   * @param _weiAmount Value in wei involved in the purchase
+   */
+  function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
+    // optional override
+  }
+
+  /**
+   * @dev Override to extend the way in which ether is converted to tokens.
+   * @param _weiAmount Value in wei to be converted into tokens
+   * @return Number of tokens that can be purchased with the specified _weiAmount
+   */
+  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
+    return _weiAmount.mul(rate);
+  }
+
+  /**
+   * @dev Determines how ETH is stored/forwarded on purchases.
+   */
+  function _forwardFunds() internal {
+    wallet.transfer(msg.value);
   }
 }

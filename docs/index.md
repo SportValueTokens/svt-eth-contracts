@@ -1,21 +1,34 @@
 # Sporting Stars Smart Contracts
 
-## SportTrade Coin
-
+## SportValueCoin
 utility token
-fixed supply - 100M
-need to trade on the platform
+fixed supply - 100M, 18 decimals
+burnable
 
-## Sporting Star tokens
+## PlayerToken
+represents a sports player
+mintable
 
-Multiple tokens representing a sport celebrity. Each celebrity has its token. There will be a token factory.
-Tokens will be tradeable for SportTrade coin on Sporting Stars distributed exchange.
-10% inflation per year. New minted coins will be sold on the market for ST coins to fund the dividend pool.
-Each token holder will receive a monthly dividend based on the sports celebrity performance. There will be a pool per
-sport. Tokens are ERC20 compatible so can be traded externally too.
+## Team Token
+represents a team%
+mintable
+
+## SportsMarket
+represents a market. make payouts based on results. funded by crowdsale.
+crowdsale contract, mints new tokens each season.
+tokens are minted if no stock exist
+buys back tokens on current price
+Price is calculated with a delta algorithm.
+Later, when tokens will be traded on an exchange, it can still be used to provide liquidity with the price coming from
+an oracle.
+pays payouts based on sports results provided by a SportResultsOracle in SVCoin from the pre season sale.
+
+payout rules:
+- top10 ranked share payouts
+- paid weekly
+- amount = revenue from newly minted coins for the period (week) distributed like (50%,25%,12%,6%,3%,2%,1%)
 
 ## SportResultsOracle
+contract that contains sports results for a give tournament
+it will be distributed with multiple validators
 
-## DividendContract
-
-## Order settlement ...

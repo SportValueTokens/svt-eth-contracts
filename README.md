@@ -1,8 +1,8 @@
-#Ethereum Smart Contracts for DevCoin
+#Ethereum Smart Contracts for Sport Tokens
  
 ## Test locally
 
-    npm install -g ethereumjs-testrpc
+    npm install -g ganache-cli
     npm install
     npm test
     
