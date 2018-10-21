@@ -5,10 +5,10 @@ import "./AssetToken.sol";
 /**
 This token represents a tradeable player
 */
-contract PlayerToken is AssetToken {
+contract TeamToken is AssetToken {
 
   /**
-  * Constructor for a new Player Token.
+  * Constructor for a new Team Token.
   * @param initialBalance balance (18 decimals)
   * @param _name name of footballer
   * @param _symbol token symbol

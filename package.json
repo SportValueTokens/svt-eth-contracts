@@ -8,7 +8,7 @@
   },
   "scripts": {
     "compile": "truffle compile",
-    "test": "eslint . && truffle test",
+    "test": "truffle test",
     "lint": "solhint contracts/**/*.sol && eslint .",
     "coverage": "solidity-coverage"
   },
