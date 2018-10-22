@@ -44,6 +44,11 @@ contract LiquidityProvider is Ownable {
     uint value
   );
 
+  event Dividend(
+    address indexed tokenHolder,
+    uint amount
+  );
+
   constructor(address coinAddress) public {
     coinContract = SportValueCoin(coinAddress);
   }
@@ -54,7 +59,11 @@ contract LiquidityProvider is Ownable {
     prices[assetToken.id()] = price;
   }
 
-  // TODO remove token
+  function removeAssetFromMarket(address assetTokenAddress) public onlyOwner {
+    AssetToken assetToken = AssetToken(assetTokenAddress);
+    delete assets[assetToken.id()];
+    delete prices[assetToken.id()];
+  }
 
   function updatePriceOnBuy(uint assetId, uint nbAssets) private {
     prices[assetId] = prices[assetId] + nbAssets * priceDelta;
@@ -68,9 +77,9 @@ contract LiquidityProvider is Ownable {
     // how many SVC buyer needs to buy this asset
     uint price = prices[assetId] + prices[assetId] / halfSpreadDenominator;
     uint nbCoins = price * nbAssets / 10 ** decimals;
-    coinContract.transferFrom(msg.sender, this, nbCoins);
     AssetToken assetContract = AssetToken(assets[assetId]);
-    assetContract.transfer(msg.sender, nbAssets);
+    require(coinContract.transferFrom(msg.sender, this, nbCoins),"Failed coin transfer from buyer to liquidity contract");
+    require(assetContract.transfer(msg.sender, nbAssets),"Failed asset transfer from liquidity contract to buyer");
     updatePriceOnBuy(assetId, nbAssets);
     emit TokenPurchase(msg.sender, nbAssets, price, nbCoins);
   }
@@ -80,18 +89,18 @@ contract LiquidityProvider is Ownable {
     uint price = prices[assetId] - prices[assetId] / halfSpreadDenominator;
     uint nbCoins = price * nbAssets / 10 ** decimals;
     AssetToken assetContract = AssetToken(assets[assetId]);
-    assetContract.transferFrom(msg.sender, this, nbAssets);
-    coinContract.transfer(msg.sender, nbCoins);
+    require(assetContract.transferFrom(msg.sender, this, nbAssets),"Failed asset transfer from seller to liquidity contract");
+    require(coinContract.transfer(msg.sender, nbCoins),"Failed coin transfer from liquidity contract to seller");
     updatePriceOnSell(assetId, nbAssets);
     emit TokenSale(msg.sender, nbAssets, price, nbCoins);
   }
 
   // pay dividend
   function payoutTo(address tokenHolder, uint amount) public onlyOwner {
-    require(coinContract.transfer(tokenHolder, amount));
+    require(coinContract.transfer(tokenHolder, amount),"Failed dividend payout");
+    emit Dividend(tokenHolder, amount);
   }
 
-  // TODO events
   // TODO save digital signature of weekly ranks
   // use that signature to verify if someone can claim payment
 }
