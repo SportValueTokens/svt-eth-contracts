@@ -15,47 +15,74 @@ contract('LiquidityProvider', function (accounts) {
   const user1Account = accounts[1]
   const user2Account = accounts[2]
   const decimals = 18
-  const initialAmountAssets = new BigNumber(10).pow(decimals)
   const oneCoin = new BigNumber(1).times(new BigNumber(10).pow(decimals))
+  const twoCoins = new BigNumber(2).times(new BigNumber(10).pow(decimals))
+  const tenCoins = new BigNumber(10).times(new BigNumber(10).pow(decimals))
   const initialPrice = new BigNumber(10).pow(4) // price is 1 SVC
   const id = 134820
   const symbol = 'FLMS'
 
   let init = async () => {
     coinContract = await SVCoinContract.new({from: creatorAccount})
-    playerTokenContract = await PlayerTokenContract.new(initialAmountAssets, 'Lionel Messi Token', symbol, id, {from: creatorAccount})
-    // give each user 1000 SVC
-    await coinContract.transfer(user1Account, oneCoin, {from: creatorAccount})
-    await coinContract.transfer(user2Account, oneCoin, {from: creatorAccount})
+    playerTokenContract = await PlayerTokenContract.new(tenCoins, 'Lionel Messi Token', symbol, id, {from: creatorAccount})
+    // give each user 10 SVC
+    await coinContract.transfer(user1Account, tenCoins, {from: creatorAccount})
+    await coinContract.transfer(user2Account, tenCoins, {from: creatorAccount})
 
     liquidityContract = await LiquidityContract.new(coinContract.address, {from: creatorAccount})
     await liquidityContract.addAssetToMarket(playerTokenContract.address, initialPrice, {from: creatorAccount})
 
-    // transfer all assets to liquidity contract
-    playerTokenContract.transfer(liquidityContract.address, initialAmountAssets)
+    // transfer assets to liquidity contract and user2
+    playerTokenContract.transfer(liquidityContract.address, oneCoin)
+    playerTokenContract.transfer(user2Account, twoCoins)
+
+    // transfer SVC to contract
+    await coinContract.transfer(liquidityContract.address, tenCoins, {from: creatorAccount})
   }
 
-  describe.only('Asset purchase', () => {
+  describe('Asset purchase', () => {
     beforeEach(init)
 
     it('a user should be able to buy an asset with SVC', async () => {
       // check if user1 has money
       let coinBalance = await coinContract.balanceOf.call(user1Account)
       console.log('User1 initial SVC balance: ', coinBalance.toString())
-      expect(coinBalance).bignumber.to.equal(oneCoin)
-
-      // first user1Account should authorise the contract
-      let res = await coinContract.approve(liquidityContract.address, oneCoin, {from: user1Account})
+      expect(coinBalance).bignumber.to.equal(tenCoins)
+      // first user1Account should approve the contract to spend its SVC
+      let res = await coinContract.approve(liquidityContract.address, twoCoins, {from: user1Account})
       assert.ok(res)
       // then buy 1 token
-      await liquidityContract.buy(id, 1, {from: user1Account})
-      // we expect 1 token to bought 1 SVC to be debited from user1 acc
+      await liquidityContract.buy(id, oneCoin, {from: user1Account})
+      // we expect 1 token to bought 1.01 SVC to be debited from user1 acc
       coinBalance = await coinContract.balanceOf.call(user1Account)
       console.log('User1 SVC balance after purchase: ', coinBalance.toString())
-      expect(coinBalance).bignumber.to.equal(oneCoin.minus(1))
+      expect(coinBalance).bignumber.to.equal(new BigNumber(899).times(new BigNumber(10).pow(decimals - 2)))
       let tokenBalance = await playerTokenContract.balanceOf.call(user1Account)
       console.log('User1 Asset balance after purchase: ', tokenBalance.toString())
-      expect(tokenBalance).bignumber.to.equal(new BigNumber(1).pow(decimals))
+      expect(tokenBalance).bignumber.to.equal(oneCoin)
+    })
+  })
+
+  describe('Asset sale', () => {
+    beforeEach(init)
+
+    it('a user should be able to sell an asset for SVC', async () => {
+      // check if user2 has tokens
+      let tokenBalance = await playerTokenContract.balanceOf.call(user2Account)
+      console.log('User2 initial asset token balance: ', tokenBalance.toString())
+      expect(tokenBalance).bignumber.to.equal(twoCoins)
+      // user2 needs to allow the liquidity contract to spend his tokens
+      let res = await playerTokenContract.approve(liquidityContract.address, twoCoins, {from: user2Account})
+      assert.ok(res)
+      // then sell 1 token
+      await liquidityContract.sell(id, oneCoin, {from: user2Account})
+      // we expect 1 token to be sold for 0.99 SVC
+      let coinBalance = await coinContract.balanceOf.call(user2Account)
+      console.log('User2 SVC balance after purchase: ', coinBalance.toString())
+      expect(coinBalance).bignumber.to.equal(new BigNumber(1099).times(new BigNumber(10).pow(decimals - 2)))
+      tokenBalance = await playerTokenContract.balanceOf.call(user2Account)
+      console.log('User2 Asset balance after purchase: ', tokenBalance.toString())
+      expect(tokenBalance).bignumber.to.equal(oneCoin)
     })
   })
 })

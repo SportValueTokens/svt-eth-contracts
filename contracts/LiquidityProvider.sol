@@ -78,10 +78,8 @@ contract LiquidityProvider is Ownable {
   function sell(uint assetId, uint nbAssets) public {
     // how many SVC buyer gets for that asset
     uint price = prices[assetId] - prices[assetId] / halfSpreadDenominator;
-    uint nbCoins = price * nbAssets;
+    uint nbCoins = price * nbAssets / 10 ** decimals;
     AssetToken assetContract = AssetToken(assets[assetId]);
-//    uint nbAssetsAllowed = assetContract.allowance(msg.sender, this);
-//    require(nbAssetsAllowed >= nbAssets);
     assetContract.transferFrom(msg.sender, this, nbAssets);
     coinContract.transfer(msg.sender, nbCoins);
     updatePriceOnSell(assetId, nbAssets);
