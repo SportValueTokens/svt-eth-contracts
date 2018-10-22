@@ -5,7 +5,7 @@ const BigNumber = require('bignumber.js')
 const chai = require('chai')
 chai.use(require('chai-bignumber')(BigNumber))
 const expect = chai.expect
-// const expectRevert = require('./helpers').expectRevert
+const expectRevert = require('./helpers').expectRevert
 
 contract('LiquidityProvider', function (accounts) {
   let coinContract
@@ -61,6 +61,15 @@ contract('LiquidityProvider', function (accounts) {
       console.log('User1 Asset balance after purchase: ', tokenBalance.toString())
       expect(tokenBalance).bignumber.to.equal(oneCoin)
     })
+
+    it('should fail if buyer has no money', async () => {
+      const user3Account = accounts[3]
+      await expectRevert(liquidityContract.buy(id, oneCoin, {from: user3Account}))
+    })
+
+    it('should fail if buyer has not allowed transfers', async () => {
+      await expectRevert(liquidityContract.buy(id, oneCoin, {from: user1Account}))
+    })
   })
 
   describe('Asset sale', () => {
@@ -83,6 +92,15 @@ contract('LiquidityProvider', function (accounts) {
       tokenBalance = await playerTokenContract.balanceOf.call(user2Account)
       console.log('User2 Asset balance after purchase: ', tokenBalance.toString())
       expect(tokenBalance).bignumber.to.equal(oneCoin)
+    })
+
+    it('should fail if seller has no tokens', async () => {
+      const user3Account = accounts[3]
+      await expectRevert(liquidityContract.sell(id, oneCoin, {from: user3Account}))
+    })
+
+    it('should fail if seller has not allowed transfers', async () => {
+      await expectRevert(liquidityContract.buy(id, oneCoin, {from: user2Account}))
     })
   })
 })
