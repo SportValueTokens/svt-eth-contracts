@@ -103,4 +103,6 @@ contract('LiquidityProvider', function (accounts) {
       await expectRevert(liquidityContract.buy(id, oneCoin, {from: user2Account}))
     })
   })
+
+  // TODO test payoutTo
 })
