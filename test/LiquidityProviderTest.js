@@ -60,6 +60,7 @@ contract('LiquidityProvider', function (accounts) {
       let tokenBalance = await playerTokenContract.balanceOf.call(user1Account)
       console.log('User1 Asset balance after purchase: ', tokenBalance.toString())
       expect(tokenBalance).bignumber.to.equal(oneCoin)
+      // TODO assert price
     })
 
     it('should fail if buyer has no money', async () => {
@@ -92,6 +93,8 @@ contract('LiquidityProvider', function (accounts) {
       tokenBalance = await playerTokenContract.balanceOf.call(user2Account)
       console.log('User2 Asset balance after purchase: ', tokenBalance.toString())
       expect(tokenBalance).bignumber.to.equal(oneCoin)
+
+      // TODO assert price
     })
 
     it('should fail if seller has no tokens', async () => {
@@ -104,5 +107,21 @@ contract('LiquidityProvider', function (accounts) {
     })
   })
 
-  // TODO test payoutTo
+  describe('Dividend Payout', () => {
+    beforeEach(init)
+
+    it('should fail if contract has no tokens', async () => {
+      await expectRevert(liquidityContract.payoutTo(user1Account, tenCoins.plus(oneCoin), {from: creatorAccount}))
+    })
+
+    it('should fail if call from non owner', async () => {
+      await expectRevert(liquidityContract.payoutTo(user1Account, oneCoin, {from: user2Account}))
+    })
+
+    it('should pay coins to beneficiary', async () => {
+      await liquidityContract.payoutTo(user1Account, oneCoin, {from: creatorAccount})
+      let coinBalance = await coinContract.balanceOf.call(user1Account)
+      expect(coinBalance).bignumber.to.equal(tenCoins.plus(oneCoin))
+    })
+  })
 })
