@@ -60,7 +60,10 @@ contract('LiquidityProvider', function (accounts) {
       let tokenBalance = await playerTokenContract.balanceOf.call(user1Account)
       console.log('User1 Asset balance after purchase: ', tokenBalance.toString())
       expect(tokenBalance).bignumber.to.equal(oneCoin)
-      // TODO assert price
+
+      // price should have increased
+      let price = await liquidityContract.getAssetPrice.call(id)
+      expect(price).bignumber.to.equal(10100)
     })
 
     it('should fail if buyer has no money', async () => {
@@ -94,7 +97,9 @@ contract('LiquidityProvider', function (accounts) {
       console.log('User2 Asset balance after purchase: ', tokenBalance.toString())
       expect(tokenBalance).bignumber.to.equal(oneCoin)
 
-      // TODO assert price
+      // price should have decreased
+      let price = await liquidityContract.getAssetPrice.call(id)
+      expect(price).bignumber.to.equal(9900)
     })
 
     it('should fail if seller has no tokens', async () => {

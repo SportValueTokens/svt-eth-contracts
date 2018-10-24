@@ -22,7 +22,7 @@ contract LiquidityProvider is Ownable {
   uint public decimals = 4;
 
   // each unit purchased will increase the price by price_delta
-  uint public priceDelta = 10 ** decimals;
+  uint public priceDelta = 10 ** 2;
 
   // spread is 2%, so half spread os 1% or 1/100
   uint public halfSpreadDenominator = 100;
@@ -66,11 +66,15 @@ contract LiquidityProvider is Ownable {
   }
 
   function updatePriceOnBuy(uint assetId, uint nbAssets) private {
-    prices[assetId] = prices[assetId] + nbAssets * priceDelta;
+    prices[assetId] = prices[assetId] + nbAssets / 10 ** 18 * priceDelta;
   }
 
-  function updatePriceOnSell(uint assetId, uint nb_assets) private {
-    prices[assetId] = prices[assetId] - nb_assets * priceDelta;
+  function updatePriceOnSell(uint assetId, uint nbAssets) private {
+    prices[assetId] = prices[assetId] - nbAssets / 10 ** 18 * priceDelta;
+  }
+
+  function getAssetPrice(uint assetId) public view returns (uint) {
+    return prices[assetId];
   }
 
   function buy(uint assetId, uint nbAssets) public {
@@ -78,8 +82,8 @@ contract LiquidityProvider is Ownable {
     uint price = prices[assetId] + prices[assetId] / halfSpreadDenominator;
     uint nbCoins = price * nbAssets / 10 ** decimals;
     AssetToken assetContract = AssetToken(assets[assetId]);
-    require(coinContract.transferFrom(msg.sender, this, nbCoins),"Failed coin transfer from buyer to liquidity contract");
-    require(assetContract.transfer(msg.sender, nbAssets),"Failed asset transfer from liquidity contract to buyer");
+    require(coinContract.transferFrom(msg.sender, this, nbCoins), "Failed coin transfer from buyer to liquidity contract");
+    require(assetContract.transfer(msg.sender, nbAssets), "Failed asset transfer from liquidity contract to buyer");
     updatePriceOnBuy(assetId, nbAssets);
     emit TokenPurchase(msg.sender, nbAssets, price, nbCoins);
   }
@@ -89,15 +93,15 @@ contract LiquidityProvider is Ownable {
     uint price = prices[assetId] - prices[assetId] / halfSpreadDenominator;
     uint nbCoins = price * nbAssets / 10 ** decimals;
     AssetToken assetContract = AssetToken(assets[assetId]);
-    require(assetContract.transferFrom(msg.sender, this, nbAssets),"Failed asset transfer from seller to liquidity contract");
-    require(coinContract.transfer(msg.sender, nbCoins),"Failed coin transfer from liquidity contract to seller");
+    require(assetContract.transferFrom(msg.sender, this, nbAssets), "Failed asset transfer from seller to liquidity contract");
+    require(coinContract.transfer(msg.sender, nbCoins), "Failed coin transfer from liquidity contract to seller");
     updatePriceOnSell(assetId, nbAssets);
     emit TokenSale(msg.sender, nbAssets, price, nbCoins);
   }
 
   // pay dividend
   function payoutTo(address tokenHolder, uint amount) public onlyOwner {
-    require(coinContract.transfer(tokenHolder, amount),"Failed dividend payout");
+    require(coinContract.transfer(tokenHolder, amount), "Failed dividend payout");
     emit Dividend(tokenHolder, amount);
   }
 
