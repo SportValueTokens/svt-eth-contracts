@@ -1,10 +1,10 @@
 pragma solidity 0.4.24;
 
 import "./Crowdsale.sol";
-import "./Ownable.sol";
-import "./SportValueCoin.sol";
-import "./ERC20.sol";
-import "./SafeERC20.sol";
+import "./tokens/Ownable.sol";
+import "./tokens/SportValueCoin.sol";
+import "./tokens/ERC20.sol";
+import "./tokens/SafeERC20.sol";
 
 
 /**

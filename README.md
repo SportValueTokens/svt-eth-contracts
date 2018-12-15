@@ -1,4 +1,12 @@
 #Ethereum Smart Contracts for Sport Tokens
+
+## Module
+
+* contracts - Solidity smart contracts
+* user-api - interface for user apps
+* oracle - sports data oracle
+* payouts - payouts service
+
  
 ## Test locally
 

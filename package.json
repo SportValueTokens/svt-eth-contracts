@@ -13,7 +13,10 @@
     "coverage": "solidity-coverage"
   },
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "koa": "^2.6.1",
+    "web3": "^1.0.0-beta.36"
+  },
   "devDependencies": {
     "bignumber": "^1.1.0",
     "chai": "^4.1.2",

@@ -11,7 +11,7 @@ contract AssetToken is MintableToken {
 
   // meta data
   string public constant version = '1.0';
-  uint256 public constant decimals = 18;
+  uint public constant decimals = 18;
 
   string public symbol;
   string public name;
