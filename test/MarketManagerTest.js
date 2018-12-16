@@ -24,12 +24,12 @@ contract('MarketManager', function (accounts) {
 
   let init = async () => {
     coinContract = await SVCoinContract.new({from: creatorAccount})
-    playerTokenContract = await PlayerTokenContract.new(tenCoins, 'Lionel Messi Token', symbol, id, {from: creatorAccount})
+    playerTokenContract = await PlayerTokenContract.new(tenCoins, 'Lionel Messi Token', 'football', symbol, id, {from: creatorAccount})
     // give each user 10 SVC
     await coinContract.transfer(user1Account, tenCoins, {from: creatorAccount})
     await coinContract.transfer(user2Account, tenCoins, {from: creatorAccount})
 
-    marketManagerContract = await MarketManagerContract.new(coinContract.address, {from: creatorAccount})
+    marketManagerContract = await MarketManagerContract.new('football', coinContract.address, {from: creatorAccount})
     await marketManagerContract.addAssetToMarket(playerTokenContract.address, initialPrice, {from: creatorAccount})
 
     // transfer assets to user2

@@ -8,6 +8,7 @@ import "./MarketManager.sol";
 
 contract LiquidityProvider is Ownable {
   string public version = '0.1';
+  string marketName;
 
   SportValueCoin public coinContract;
   MarketManager public marketManagerContract;
@@ -57,7 +58,8 @@ contract LiquidityProvider is Ownable {
     uint amount
   );
 
-  constructor(address coinAddress) public {
+  constructor(string _marketName, address coinAddress) public {
+    marketName = _marketName;
     coinContract = SportValueCoin(coinAddress);
   }
 

@@ -15,7 +15,7 @@ contract('PlayerToken', function (accounts) {
   const symbol = 'FLMS'
 
   let init = async () => {
-    tokenContract = await TokenContract.new(initialAmount, 'Lionel Messi Token', symbol, id, {from: creatorAccount})
+    tokenContract = await TokenContract.new(initialAmount, 'Lionel Messi Token', 'football', symbol, id, {from: creatorAccount})
   }
 
   describe('Creation', () => {

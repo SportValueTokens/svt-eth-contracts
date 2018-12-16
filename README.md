@@ -4,7 +4,6 @@
 
 * contracts - Solidity smart contracts
 * user-api - interface for user apps
-* oracle - sports data oracle
 * payouts - payouts service
 
  
@@ -19,6 +18,9 @@
 * Start testrpc
 * Deploy the contracts using truffle: ```truffle migrate```
 * Then launch truffle console to play with the contracts: ```truffle console```  
+
+## Deploy on remix
+```truffle-flattener [files]```
 
 ## Deploy on test net (Ropsten)
 

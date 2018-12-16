@@ -13,6 +13,7 @@ import "./tokens/ERC20.sol";
 //
 contract MarketManager is Ownable {
   string public version = '0.1';
+  string public name;
 
   SportValueCoin public coinContract;
 
@@ -43,7 +44,8 @@ contract MarketManager is Ownable {
     uint amount
   );
 
-  constructor(address coinAddress) public {
+  constructor(string _name, address coinAddress) public {
+    name = _name;
     coinContract = SportValueCoin(coinAddress);
   }
 
