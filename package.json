@@ -1,8 +1,8 @@
 {
-  "name": "sporttokens-contracts",
-  "version": "1.0.0",
-  "description": "Ethereum Smart Contracts for Sport Tokens",
-  "main": "truffle.js",
+  "name": "sportvaluetoken-contracts",
+  "version": "0.1.0",
+  "description": "Ethereum Smart Contracts for Sport Value Tokens",
+  "main": "",
   "directories": {
     "test": "test"
   },
@@ -15,6 +15,7 @@
   "license": "MIT",
   "dependencies": {
     "koa": "^2.6.1",
+    "mongoose": "^5.4.0",
     "web3": "^1.0.0-beta.36"
   },
   "devDependencies": {
