@@ -1,4 +1,4 @@
-const TokenContract = artifacts.require('PlayerToken.sol')
+const TokenContract = artifacts.require('tokens/PlayerToken.sol')
 const BigNumber = require('bignumber.js')
 const chai = require('chai')
 chai.use(require('chai-bignumber')(BigNumber))
@@ -15,7 +15,7 @@ contract('PlayerToken', function (accounts) {
   const symbol = 'FLMS'
 
   let init = async () => {
-    tokenContract = await TokenContract.new(initialAmount, 'Lionel Messi Token', 'football', symbol, id, {from: creatorAccount})
+    tokenContract = await TokenContract.new(initialAmount, 'Lionel Messi Token', symbol, id, 'football', {from: creatorAccount})
   }
 
   describe('Creation', () => {
