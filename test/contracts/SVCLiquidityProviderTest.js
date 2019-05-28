@@ -127,9 +127,49 @@ contract('SVCLiquidityProvider', function (accounts) {
     it('should fail if seller has not allowed transfers', async () => {
       await expectRevert(liquidityContract.sell(player_id, oneCoin, {from: user2Account}))
     })
-
   })
 
-  // TODO update price, remove asset
+  describe('Price update', () => {
+    beforeEach(init)
 
+    it('should update prices', async () => {
+      await liquidityContract.updatePrice(player_id, 50000, {from: creatorAccount})
+      let price = await liquidityContract.getAssetPrice.call(player_id, {from: user1Account})
+      expect(price).bignumber.to.equal(50000)
+    })
+
+    it('should fail if caller not owner', async () => {
+      await expectRevert(liquidityContract.updatePrice(player_id, 5000, {from: user2Account}))
+    })
+  })
+
+  describe('Add/Remove asset', () => {
+    beforeEach(init)
+
+    it('should add and remove asset', async () => {
+      let player2Contract = await PlayerTokenContract.new(thousandCoins, 'Some Bad Player', 'test', 123, 'football', {from: creatorAccount})
+      await liquidityContract.addAssetToMarket(player2Contract.address, initialPrice, {from: creatorAccount})
+      let price = await liquidityContract.getAssetPrice.call(123, {from: user1Account})
+      expect(price).bignumber.to.equal(initialPrice)
+      await liquidityContract.removeAssetFromMarket(player2Contract.address, {from: creatorAccount})
+      price = await liquidityContract.getAssetPrice.call(123, {from: user1Account})
+      expect(price).bignumber.to.equal(0)
+    })
+
+    it('should fail to add an existing asset twice', async () => {
+      let player2Contract = await PlayerTokenContract.new(thousandCoins, 'Some Bad Player', 'test', player_id, 'football', {from: creatorAccount})
+      await expectRevert(liquidityContract.addAssetToMarket(player2Contract.address, initialPrice, {from: creatorAccount}))
+    })
+
+    it('should fail to add asset if caller not owner', async () => {
+      let player2Contract = await PlayerTokenContract.new(thousandCoins, 'Some Bad Player', 'test', 123, 'football', {from: user1Account})
+      await expectRevert(liquidityContract.addAssetToMarket(player2Contract.address, initialPrice, {from: user1Account}))
+    })
+
+    it('should fail to remove asset if caller not owner', async () => {
+      let player2Contract = await PlayerTokenContract.new(thousandCoins, 'Some Bad Player', 'test', 123, 'football', {from: creatorAccount})
+      await liquidityContract.addAssetToMarket(player2Contract.address, initialPrice, {from: creatorAccount})
+      await expectRevert(liquidityContract.removeAssetFromMarket(player2Contract.address, {from: user1Account}))
+    })
+  })
 })

@@ -60,6 +60,7 @@ contract SVCLiquidityProvider is Ownable {
 
   function addAssetToMarket(address assetTokenAddress, uint price) public onlyOwner {
     AssetToken assetToken = AssetToken(assetTokenAddress);
+    require(assets[assetToken.id()] == address(0),'asset already exists');
     assets[assetToken.id()] = assetToken;
     prices[assetToken.id()] = price;
   }
