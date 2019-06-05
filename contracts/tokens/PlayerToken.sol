@@ -6,8 +6,6 @@ import "./AssetToken.sol";
 This token represents a tradeable player
 */
 contract PlayerToken is AssetToken {
-  string public sport;
-
   /**
   * Constructor for a new Player Token.
   * @param initialBalance balance (18 decimals)

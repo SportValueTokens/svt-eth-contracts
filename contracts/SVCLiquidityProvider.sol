@@ -37,20 +37,32 @@ contract SVCLiquidityProvider is Ownable {
     uint value
   );
 
+  event TokenSale(
+    address indexed seller,
+    uint assetId,
+    uint number,
+    uint price,
+    uint value
+  );
+
   event TokenPurchaseDebug(
     address indexed purchaser,
     uint assetId,
     uint nbAssets,
     uint price,
     uint nbCoins,
-    uint availableAssetBalance
+    uint availableAssetBalance,
+    string msg
   );
 
-  event TokenSale(
+  event TokenSaleDebug(
     address indexed seller,
-    uint number,
+    uint assetId,
+    uint nbAssets,
     uint price,
-    uint value
+    uint nbCoins,
+    uint availableSVCBalance,
+    string msg
   );
 
   constructor(string _name, address coinAddress) public {
@@ -91,17 +103,17 @@ contract SVCLiquidityProvider is Ownable {
   }
 
   function buy(uint assetId, uint nbAssets) public {
-    //emit TokenPurchaseDebug(msg.sender, assetId, nbAssets, 0, 0, 0);
+    emit TokenPurchaseDebug(msg.sender, assetId, nbAssets, 0, 0, 0, "buy start");
 
     // how many SVC buyer needs to buy this asset
     uint price = prices[assetId];
     uint nbCoins = price * nbAssets / 10 ** DECIMALS;
-    emit TokenPurchaseDebug(msg.sender, assetId, nbAssets, price, nbCoins, 0);
 
     // check how many assets the contract owns
     AssetToken assetContract = AssetToken(assets[assetId]);
+    require(assetContract.id() == assetId, "assetId not found");
     uint availableAssetBalance = assetContract.balanceOf(this);
-    //emit TokenPurchaseDebug(msg.sender, assetId, nbAssets, price, nbCoins, availableAssetBalance);
+    emit TokenPurchaseDebug(msg.sender, assetId, nbAssets, price, nbCoins, availableAssetBalance, "check asset balance");
     require(nbAssets <= availableAssetBalance, "Not enough assets in stock");
 
     // get paid in SVC
@@ -115,16 +127,20 @@ contract SVCLiquidityProvider is Ownable {
   }
 
   function sell(uint assetId, uint nbAssets) public {
+    emit TokenSaleDebug(msg.sender, assetId, nbAssets, 0, 0, 0, "sell start");
+
     // how many SVC buyer gets for that asset
     uint price = prices[assetId];
     uint nbCoins = price * nbAssets / 10 ** DECIMALS;
 
     // check how many SVC the contract owns
     uint availableSVCBalance = coinContract.balanceOf(this);
+    emit TokenPurchaseDebug(msg.sender, assetId, nbAssets, price, nbCoins, availableSVCBalance, "check SVC balance");
     require(nbCoins <= availableSVCBalance, "Not enough SVC in stock");
 
     // transfer assets to the contract
     AssetToken assetContract = AssetToken(assets[assetId]);
+    require(assetContract.id() == assetId, "assetId not found");
     require(assetContract.transferFrom(msg.sender, this, nbAssets), "Failed asset transfer from seller to liquidity contract");
 
     // transfer SVC
@@ -132,7 +148,7 @@ contract SVCLiquidityProvider is Ownable {
 
     // update price is transfer is successful
     updatePriceOnSell(assetId, nbAssets);
-    emit TokenSale(msg.sender, nbAssets, price, nbCoins);
+    emit TokenSale(msg.sender, assetId, nbAssets, price, nbCoins);
   }
 
 }
