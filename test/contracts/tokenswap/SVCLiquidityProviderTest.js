@@ -1,11 +1,11 @@
 const SVCoinContract = artifacts.require('./tokens/SportValueCoin.sol')
 const PlayerTokenContract = artifacts.require('./tokens/PlayerToken.sol')
-const LiquidityContract = artifacts.require('./SVCLiquidityProvider.sol')
+const LiquidityContract = artifacts.require('tokenswap/SVCLiquidityProvider.sol')
 const BigNumber = require('bignumber.js')
 const chai = require('chai')
 chai.use(require('chai-bignumber')(BigNumber))
 const expect = chai.expect
-const expectRevert = require('./helpers').expectRevert
+const expectRevert = require('../helpers').expectRevert
 
 contract('SVCLiquidityProvider', function (accounts) {
   let coinContract

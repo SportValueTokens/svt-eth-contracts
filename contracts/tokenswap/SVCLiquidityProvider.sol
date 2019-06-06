@@ -1,9 +1,9 @@
 pragma solidity 0.4.24;
 
-import "./tokens/SportValueCoin.sol";
-import "./tokens/AssetToken.sol";
-import "./tokens/Ownable.sol";
-import "./tokens/ERC20.sol";
+import "../tokens/SportValueCoin.sol";
+import "../tokens/AssetToken.sol";
+import "../tokens/Ownable.sol";
+import "../tokens/ERC20.sol";
 
 contract SVCLiquidityProvider is Ownable {
   string public version = '0.1';

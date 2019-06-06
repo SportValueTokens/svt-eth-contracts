@@ -1,10 +1,10 @@
 const SVCContract = artifacts.require('tokens/SportValueCoin.sol')
-const SVCExclusiveSaleETHContract = artifacts.require('./SVCExclusiveSaleETH.sol')
+const SVCExclusiveSaleETHContract = artifacts.require('crowdsale/SVCExclusiveSaleETH.sol')
 const BigNumber = require('bignumber.js')
 const chai = require('chai')
 chai.use(require('chai-bignumber')(BigNumber))
 const expect = chai.expect
-const expectRevert = require('./helpers').expectRevert
+const expectRevert = require('../helpers').expectRevert
 
 contract('SVCExclusiveSaleETH', function (accounts) {
   let tokenContract
