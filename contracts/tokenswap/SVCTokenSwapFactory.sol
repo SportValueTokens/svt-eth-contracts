@@ -11,7 +11,9 @@ contract SVCTokenSwapFactory is Ownable {
   string public name;
   string public version = "0.1";
   address coinAddress;
+  // token address => Exchange contracts
   mapping(address => SVCTokenSwap) exchanges;
+  address[] public tokenList;
 
   constructor(string _name, address _coinAddress) public {
     name = _name;
@@ -19,8 +21,10 @@ contract SVCTokenSwapFactory is Ownable {
   }
 
   function createExchange(address asset) public onlyOwner returns (address exchange) {
+    require(asset != address(0));
     SVCTokenSwap newExchange = new SVCTokenSwap(coinAddress, asset);
     exchanges[asset] = newExchange;
+    tokenList.push(asset);
     return newExchange;
   }
 

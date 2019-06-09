@@ -51,6 +51,10 @@ contract SVCTokenSwap is Ownable {
     asset = AssetToken(assetAddress);
   }
 
+  function getAssetAddress() public view returns (address) {
+    return asset;
+  }
+
   function getAssetPrice() public view returns (uint) {
     uint assetBalance = asset.balanceOf(this);
     uint coinBalance = coin.balanceOf(this);
@@ -100,7 +104,36 @@ contract SVCTokenSwap is Ownable {
     emit TokenSale(msg.sender, nbAssets, price, nbCoins);
   }
 
-  // TODO add liquidity
-  // TODO refund liquidity
+  /**
+  * Add liquidity by keep existing ratio of assets
+  * because price depends on the ration. This should not modify price.
+  */
+  function addLiquidity(uint nbCoins) public onlyOwner {
+    uint assetBalance = asset.balanceOf(this);
+    uint coinBalance = coin.balanceOf(this);
+
+    uint nbAssetsToAdd = assetBalance * nbCoins / coinBalance;
+
+    // transfer assets to the contract
+    require(asset.transferFrom(msg.sender, this, nbAssetsToAdd), "Failed asset transfer from caller to contract");
+
+    // transfer SVC to the contract
+    require(coin.transferFrom(msg.sender, this, nbCoins), "Failed SVC transfer from caller to contract");
+  }
+
+  function removeLiquidity(uint nbCoins) public onlyOwner {
+    uint assetBalance = asset.balanceOf(this);
+    uint coinBalance = coin.balanceOf(this);
+    require(nbCoins <= coinBalance, "Not enough SVC owned by the contract");
+    uint nbAssetsToRemove = assetBalance * nbCoins / coinBalance;
+    require(nbAssetsToRemove <= assetBalance, "Not enough assets owned by the contract");
+
+    // transfer assets to the sender
+    require(asset.transfer(msg.sender, nbAssetsToRemove), "Failed asset transfer to caller from contract");
+
+    // transfer SVC to the sender
+    require(coin.transfer(msg.sender, nbCoins), "Failed SVC transfer to caller from contract");
+  }
+
 
 }

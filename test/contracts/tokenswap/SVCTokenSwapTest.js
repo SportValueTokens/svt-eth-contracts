@@ -83,6 +83,7 @@ contract('SVCTokenSwap', function (accounts) {
       await expectRevert(exchangeContract.buy(oneCoin, {from: user1Account}))
     })
 
+    // should not be able to have 0 assets
   })
 
   describe('Asset sale', () => {
@@ -127,6 +128,103 @@ contract('SVCTokenSwap', function (accounts) {
     it('should fail if seller has not allowed transfers', async () => {
       await expectRevert(exchangeContract.sell(oneCoin, {from: user2Account}))
     })
+
+    // should not be able to have 0 assets
   })
 
+  describe('addLiquidity', () => {
+    beforeEach(init)
+
+    it('should add liquidity to the exchange', async () => {
+      // approve transfers
+      let res = await playerTokenContract.approve(exchangeContract.address, tenCoins, {from: creatorAccount})
+      assert.ok(res)
+      res = await coinContract.approve(exchangeContract.address, tenCoins, {from: creatorAccount})
+      assert.ok(res)
+
+      await exchangeContract.addLiquidity(oneCoin, {from: creatorAccount})
+
+      // we expect 1 coin and 1 token to be transferred
+      let coinBalance = await coinContract.balanceOf.call(exchangeContract.address)
+      console.log('Exchange SVC balance: ', coinBalance.toString())
+      expect(coinBalance).bignumber.to.equal(new BigNumber(11).times(new BigNumber(10).pow(DECIMALS)))
+      let assetBalance = await playerTokenContract.balanceOf.call(exchangeContract.address)
+      console.log('Exchange Asset balance: ', assetBalance.toString())
+      expect(assetBalance).bignumber.to.equal(new BigNumber(11).times(new BigNumber(10).pow(DECIMALS)))
+
+      // price should not have changed
+      let price = await exchangeContract.getAssetPrice.call()
+      expect(price).bignumber.to.equal(10000)
+    })
+
+    it('should fail if not enough assets', async () => {
+      // approve transfers
+      let res = await playerTokenContract.approve(exchangeContract.address, thousandCoins.times(2), {from: creatorAccount})
+      assert.ok(res)
+      res = await coinContract.approve(exchangeContract.address, thousandCoins.times(2), {from: creatorAccount})
+      assert.ok(res)
+
+      // try to call addLiquidity
+      await expectRevert(exchangeContract.addLiquidity(thousandCoins.times(2), {from: creatorAccount}))
+
+      // price should not have changed
+      let price = await exchangeContract.getAssetPrice.call()
+      expect(price).bignumber.to.equal(10000)
+    })
+
+    it('should fail if asset not approved', async () => {
+      // approve transfers
+      res = await coinContract.approve(exchangeContract.address, thousandCoins.times(2), {from: creatorAccount})
+      assert.ok(res)
+
+      // try to call addLiquidity
+      await expectRevert(exchangeContract.addLiquidity(oneCoin, {from: creatorAccount}))
+
+      // price should not have changed
+      let price = await exchangeContract.getAssetPrice.call()
+      expect(price).bignumber.to.equal(10000)
+    })
+
+  })
+
+  describe('removeLiquidity', () => {
+    beforeEach(init)
+
+    it('should remove liquidity from the exchange', async () => {
+      await exchangeContract.removeLiquidity(twoCoins, {from: creatorAccount})
+
+      // we expect 1 coin and 1 token to be transferred
+      let coinBalance = await coinContract.balanceOf.call(exchangeContract.address)
+      console.log('Exchange SVC balance: ', coinBalance.toString())
+      expect(coinBalance).bignumber.to.equal(new BigNumber(8).times(new BigNumber(10).pow(DECIMALS)))
+      let assetBalance = await playerTokenContract.balanceOf.call(exchangeContract.address)
+      console.log('Exchange Asset balance: ', assetBalance.toString())
+      expect(assetBalance).bignumber.to.equal(new BigNumber(8).times(new BigNumber(10).pow(DECIMALS)))
+
+      // price should not have changed
+      let price = await exchangeContract.getAssetPrice.call()
+      expect(price).bignumber.to.equal(10000)
+    })
+
+    it('should remove all coins from the exchange', async () => {
+      await exchangeContract.removeLiquidity(tenCoins, {from: creatorAccount})
+
+      // we expect 1 coin and 1 token to be transferred
+      let coinBalance = await coinContract.balanceOf.call(exchangeContract.address)
+      console.log('Exchange SVC balance: ', coinBalance.toString())
+      expect(coinBalance).bignumber.to.equal(0)
+      let assetBalance = await playerTokenContract.balanceOf.call(exchangeContract.address)
+      console.log('Exchange Asset balance: ', assetBalance.toString())
+      expect(assetBalance).bignumber.to.equal(0)
+    })
+
+    it('should fail if not enough assets', async () => {
+      await expectRevert(exchangeContract.removeLiquidity(thousandCoins.times(2), {from: creatorAccount}))
+
+      // price should not have changed
+      let price = await exchangeContract.getAssetPrice.call()
+      expect(price).bignumber.to.equal(10000)
+    })
+
+  })
 })
