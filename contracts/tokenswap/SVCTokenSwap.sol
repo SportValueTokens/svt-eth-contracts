@@ -11,8 +11,8 @@ contract SVCTokenSwap is Ownable {
   // number of decimals we keep for price
   uint public constant DECIMALS = 4;
 
-  AssetToken private asset;
-  SportValueCoin private coin;
+  AssetToken public asset;
+  SportValueCoin public coin;
 
   event TokenPurchase(
     address indexed purchaser,

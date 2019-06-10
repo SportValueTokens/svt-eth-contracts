@@ -6,19 +6,13 @@ const BigNumber = require('bignumber.js')
 const chai = require('chai')
 chai.use(require('chai-bignumber')(BigNumber))
 const expect = chai.expect
-const expectRevert = require('../helpers').expectRevert
 
 contract('SVCTokenSwapFactory', function (accounts) {
   let coinContract
   let playerTokenContract
   let exchangeFactory
   const creatorAccount = accounts[0]
-  const user1Account = accounts[1]
   const DECIMALS = 18
-  const oneCoin = new BigNumber(1).times(new BigNumber(10).pow(DECIMALS))
-  const twoCoins = new BigNumber(2).times(new BigNumber(10).pow(DECIMALS))
-  const tenCoins = new BigNumber(10).times(new BigNumber(10).pow(DECIMALS))
-  const hundredCoins = new BigNumber(100).times(new BigNumber(10).pow(DECIMALS))
   const thousandCoins = new BigNumber(1000).times(new BigNumber(10).pow(DECIMALS))
   const player_id = 134820
   const player_symbol = 'FLMS'

@@ -1,18 +1,14 @@
 pragma solidity 0.4.24;
 
-import "../tokens/SportValueCoin.sol";
-import "../tokens/AssetToken.sol";
-import "../tokens/PlayerToken.sol";
 import "../tokens/Ownable.sol";
-import "../tokens/ERC20.sol";
 import "../tokenswap/SVCTokenSwap.sol";
 
 contract SVCTokenSwapFactory is Ownable {
   string public name;
   string public version = "0.1";
-  address coinAddress;
+  address public coinAddress;
   // token address => Exchange contracts
-  mapping(address => SVCTokenSwap) exchanges;
+  mapping(address => SVCTokenSwap) private exchanges;
   address[] public tokenList;
 
   constructor(string _name, address _coinAddress) public {
@@ -23,6 +19,7 @@ contract SVCTokenSwapFactory is Ownable {
   function createExchange(address asset) public onlyOwner returns (address exchange) {
     require(asset != address(0));
     SVCTokenSwap newExchange = new SVCTokenSwap(coinAddress, asset);
+    newExchange.transferOwnership(owner);
     exchanges[asset] = newExchange;
     tokenList.push(asset);
     return newExchange;
