@@ -20,12 +20,11 @@ contract('SVCTokenSwap', function (accounts) {
   const tenCoins = new BigNumber(10).times(new BigNumber(10).pow(DECIMALS))
   const hundredCoins = new BigNumber(100).times(new BigNumber(10).pow(DECIMALS))
   const thousandCoins = new BigNumber(1000).times(new BigNumber(10).pow(DECIMALS))
-  const player_id = 134820
   const player_symbol = 'FLMS'
 
   let init = async () => {
     coinContract = await SVCoinContract.new({from: creatorAccount})
-    playerTokenContract = await PlayerTokenContract.new(thousandCoins, 'Lionel Messi Token', player_symbol, player_id, 'football', {from: creatorAccount})
+    playerTokenContract = await PlayerTokenContract.new(thousandCoins, 'Lionel Messi Token', player_symbol, 'football', {from: creatorAccount})
     // give each user 10 SVC
     await coinContract.transfer(user1Account, tenCoins, {from: creatorAccount})
     await coinContract.transfer(user2Account, tenCoins, {from: creatorAccount})

@@ -16,7 +16,6 @@ contract AssetToken is MintableToken, BurnableToken {
 
   string public symbol;
   string public name;
-  uint public id;
   string public sport;
 
 
@@ -24,14 +23,12 @@ contract AssetToken is MintableToken, BurnableToken {
   * Constructor for a new AssetToken.
   * @param initialBalance balance (18 decimals)
   * @param _name name
-  * @param _symbol token symbol
-  * @param _id id used to identify the token in the market (symbol cannot be used due to Solidity limitations)
+  * @param _symbol unique token symbol
   * @param _sport sport name (eg football)
   */
-  constructor(uint initialBalance, string _name, string _symbol, uint _id, string _sport) internal {
+  constructor(uint initialBalance, string _name, string _symbol, string _sport) internal {
     name = _name;
     symbol = _symbol;
-    id = _id;
     sport = _sport;
     _mint(msg.sender, initialBalance);
   }

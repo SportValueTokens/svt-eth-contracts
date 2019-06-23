@@ -1,11 +1,4 @@
 #Ethereum Smart Contracts for Sport Tokens
-
-## Module
-
-* contracts - Solidity smart contracts
-* user-api - interface for user apps
-* payouts - payouts service
-
  
 ## Test locally
 

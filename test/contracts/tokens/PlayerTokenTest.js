@@ -11,11 +11,10 @@ contract('PlayerToken', function (accounts) {
   const userAccount = accounts[1]
   const decimals = 18
   const initialAmount = new BigNumber(10).times(new BigNumber(10).pow(6 + decimals))
-  const id = 134820
   const symbol = 'FLMS'
 
   let init = async () => {
-    tokenContract = await TokenContract.new(initialAmount, 'Lionel Messi Token', symbol, id, 'football', {from: creatorAccount})
+    tokenContract = await TokenContract.new(initialAmount, 'Lionel Messi Token', symbol, 'football', {from: creatorAccount})
   }
 
   describe('Creation', () => {
@@ -28,8 +27,6 @@ contract('PlayerToken', function (accounts) {
       expect(decimalsResult).bignumber.to.equal(decimals)
       let symbol = await tokenContract.symbol.call()
       expect(symbol).to.equal(symbol)
-      let _id = await tokenContract.id.call()
-      expect(_id).bignumber.to.equal(id)
     })
   })
 

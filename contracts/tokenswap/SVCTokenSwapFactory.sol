@@ -3,6 +3,9 @@ pragma solidity 0.4.24;
 import "../tokens/Ownable.sol";
 import "../tokenswap/SVCTokenSwap.sol";
 
+/**
+* A contract factory to create new SVCTokenSwap instances for each token instance
+*/
 contract SVCTokenSwapFactory is Ownable {
   string public name;
   string public version = "0.1";
@@ -16,6 +19,10 @@ contract SVCTokenSwapFactory is Ownable {
     coinAddress = _coinAddress;
   }
 
+  /**
+  * Create a new SVCTokenSwap contract for the give asset ERC20 token
+  * @param asset the address of the ERC20 contract of the asset
+  */
   function createExchange(address asset) public onlyOwner returns (address exchange) {
     require(asset != address(0));
     SVCTokenSwap newExchange = new SVCTokenSwap(coinAddress, asset);

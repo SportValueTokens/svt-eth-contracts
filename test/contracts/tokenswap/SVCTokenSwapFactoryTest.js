@@ -14,13 +14,12 @@ contract('SVCTokenSwapFactory', function (accounts) {
   const creatorAccount = accounts[0]
   const DECIMALS = 18
   const thousandCoins = new BigNumber(1000).times(new BigNumber(10).pow(DECIMALS))
-  const player_id = 134820
   const player_symbol = 'FLMS'
 
   let init = async () => {
     coinContract = await SVCoinContract.new({from: creatorAccount})
-    playerTokenContract = await PlayerTokenContract.new(thousandCoins, 'Lionel Messi Token', player_symbol, player_id, 'football', {from: creatorAccount})
-    exchangeFactory = await SVCTokenSwapFactory.new("Football", coinContract.address, {from: creatorAccount})
+    playerTokenContract = await PlayerTokenContract.new(thousandCoins, 'Lionel Messi Token', player_symbol, 'football', {from: creatorAccount})
+    exchangeFactory = await SVCTokenSwapFactory.new('Football', coinContract.address, {from: creatorAccount})
   }
 
   describe('createExchange', () => {

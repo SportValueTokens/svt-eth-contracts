@@ -5,6 +5,10 @@ import "../tokens/AssetToken.sol";
 import "../tokens/Ownable.sol";
 import "../tokens/ERC20.sol";
 
+/**
+* This is a market making / liquidity contract inspired by Uniswap protocol but simplified.
+* The idea is to keep stock of assets and currency and calculate price based on the rations of asset/currency
+*/
 contract SVCTokenSwap is Ownable {
   string public version = '0.1';
 
@@ -46,6 +50,10 @@ contract SVCTokenSwap is Ownable {
     string msg
   );
 
+  /**
+  * @param coinAddress address is the address of the deployed contract for SVC token
+  * @param assetAddress address is the address of the ERC20 contract of the tradeable asset
+  */
   constructor(address coinAddress, address assetAddress) public {
     coin = SportValueCoin(coinAddress);
     asset = AssetToken(assetAddress);
@@ -55,6 +63,9 @@ contract SVCTokenSwap is Ownable {
     return asset;
   }
 
+  /**
+  * Calculates the price of the asset in SVC coins
+  */
   function getAssetPrice() public view returns (uint) {
     uint assetBalance = asset.balanceOf(this);
     uint coinBalance = coin.balanceOf(this);
@@ -62,6 +73,11 @@ contract SVCTokenSwap is Ownable {
     return price;
   }
 
+  /**
+  * The caller wants to buy assets using SVC coins. To do so, he needs to:
+  * 1. authorise SVCTokenSwap contract to transfer enough SVC from him
+  * 2. call buy by providing enough gas and specifying the number of assets (18 decimals) he wishes to buy
+  */
   function buy(uint nbAssets) public {
     emit TokenPurchaseDebug(msg.sender, nbAssets, 0, 0, 0, "buy start");
 
@@ -83,6 +99,11 @@ contract SVCTokenSwap is Ownable {
     emit TokenPurchase(msg.sender, nbAssets, price, nbCoins);
   }
 
+  /**
+  * The caller wants to sell assets for SVC coins. To do so, he needs to:
+  * 1. authorise SVCTokenSwap contract to transfer enough AssetToken from him
+  * 2. call sell by providing enough gas and specifying the number of assets (18 decimals) he wishes to sell
+  */
   function sell(uint nbAssets) public {
     emit TokenSaleDebug(msg.sender, nbAssets, 0, 0, 0, "sell start");
 
@@ -105,8 +126,8 @@ contract SVCTokenSwap is Ownable {
   }
 
   /**
-  * Add liquidity by keep existing ratio of assets
-  * because price depends on the ration. This should not modify price.
+  * Add liquidity by keep existing ratio of assets because price depends on the ration. This should not modify price.
+  * The caller need to have authorised the contract to transfer SVC and Assets
   */
   function addLiquidity(uint nbCoins) public onlyOwner {
     uint assetBalance = asset.balanceOf(this);
@@ -121,6 +142,9 @@ contract SVCTokenSwap is Ownable {
     require(coin.transferFrom(msg.sender, this, nbCoins), "Failed SVC transfer from caller to contract");
   }
 
+  /**
+  * The owner may remove liquidity by getting back his SVC and AssetToken
+  */
   function removeLiquidity(uint nbCoins) public onlyOwner {
     uint assetBalance = asset.balanceOf(this);
     uint coinBalance = coin.balanceOf(this);
