@@ -29,8 +29,8 @@
     "eslint-plugin-promise": "^4.0.0",
     "eslint-plugin-standard": "^3.1.0",
     "mocha": "^5.2.0",
-    "solhint": "^1.2.1",
+    "solhint": "^2.1.0",
     "solidity-coverage": "^0.5.7",
-    "truffle": "^4.1.14"
+    "truffle": "^5.0.25"
   }
 }

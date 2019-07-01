@@ -1,4 +1,4 @@
-const TokenContract = artifacts.require('rokens/SportValueCoin.sol')
+const TokenContract = artifacts.require('tokens/SportValueCoin.sol')
 const BigNumber = require('bignumber.js')
 const chai = require('chai')
 chai.use(require('chai-bignumber')(BigNumber))

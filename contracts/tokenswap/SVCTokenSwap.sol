@@ -17,6 +17,7 @@ contract SVCTokenSwap is Ownable {
 
   AssetToken public asset;
   SportValueCoin public coin;
+  string public assetCode;
 
   event TokenPurchase(
     address indexed purchaser,
@@ -57,6 +58,7 @@ contract SVCTokenSwap is Ownable {
   constructor(address coinAddress, address assetAddress) public {
     coin = SportValueCoin(coinAddress);
     asset = AssetToken(assetAddress);
+    assetCode = asset.symbol();
   }
 
   function getAssetAddress() public view returns (address) {
