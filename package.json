@@ -9,19 +9,18 @@
   "scripts": {
     "compile": "truffle compile",
     "test": "truffle test",
+    "test-debug": "node --inspect-brk ./node_modules/truffle/build/cli.bundled.js test",
     "lint": "solhint contracts/**/*.sol && eslint .",
     "coverage": "solidity-coverage"
   },
   "license": "MIT",
   "dependencies": {
-    "koa": "^2.6.1",
-    "mongoose": "^5.4.0",
-    "web3": "^1.0.0-beta.36"
+    "web3": "~1.2.0"
   },
   "devDependencies": {
-    "bignumber": "^1.1.0",
-    "chai": "^4.1.2",
-    "chai-bignumber": "^2.0.2",
+    "bn-chai": "~1.0.1",
+    "bn.js": "~5.0.0",
+    "chai": "~4.2.0",
     "eslint": "^5.4.0",
     "eslint-config-standard": "^11.0.0",
     "eslint-plugin-import": "^2.14.0",
@@ -30,7 +29,7 @@
     "eslint-plugin-standard": "^3.1.0",
     "mocha": "^5.2.0",
     "solhint": "^2.1.0",
-    "solidity-coverage": "^0.5.7",
-    "truffle": "^5.0.25"
+    "solidity-coverage": "^0.6.2",
+    "truffle": "^5.0.27"
   }
 }

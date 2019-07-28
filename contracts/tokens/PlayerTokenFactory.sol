@@ -8,23 +8,31 @@ import "./Ownable.sol";
 */
 contract PlayerTokenFactory is Ownable {
   string public name;
-  string public sport;
+  string public market;
   string public version = "0.1";
   address[] public tokenList;
 
-  constructor(string _name, string _sport) public {
+  event AssetCreated (
+    address indexed creator,
+    address indexed addr,
+    string symbol,
+    uint balance
+  );
+
+  constructor(string _name, string _market) public {
     name = _name;
-    sport = _sport;
+    market = _market;
   }
 
   /**
   * Creates a new PlayerToken and stores the address in tokenList
   */
   function createToken(uint initialBalance, string _name, string _symbol) public onlyOwner returns (address token) {
-    PlayerToken newToken = new PlayerToken(0, _name, _symbol, sport);
+    PlayerToken newToken = new PlayerToken(0, _name, _symbol, market);
     newToken.mint(owner, initialBalance);
     newToken.transferOwnership(owner);
     tokenList.push(newToken);
+    emit AssetCreated(msg.sender, newToken, _symbol, initialBalance);
     return newToken;
   }
 }

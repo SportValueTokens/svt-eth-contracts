@@ -8,15 +8,23 @@ import "../tokenswap/SVCTokenSwap.sol";
 */
 contract SVCTokenSwapFactory is Ownable {
   string public name;
+  string public market;
   string public version = "0.1";
   address public coinAddress;
   // token address => Exchange contracts
   mapping(address => SVCTokenSwap) private exchanges;
   address[] public tokenList;
 
-  constructor(string _name, address _coinAddress) public {
+  event ExchangeCreated (
+    address indexed creator,
+    address indexed addr,
+    address indexed assetAddr
+  );
+
+  constructor(string _name, address _coinAddress, string _market) public {
     name = _name;
     coinAddress = _coinAddress;
+    market = _market;
   }
 
   /**
@@ -29,6 +37,7 @@ contract SVCTokenSwapFactory is Ownable {
     newExchange.transferOwnership(owner);
     exchanges[asset] = newExchange;
     tokenList.push(asset);
+    emit ExchangeCreated(msg.sender, newExchange, asset);
     return newExchange;
   }
 

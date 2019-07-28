@@ -56,9 +56,9 @@ contract Crowdsale {
    * @param _token Address of the token being sold
    */
   constructor(uint256 _rate, address _wallet, ERC20 _token) public {
-    require(_rate > 0);
-    require(_wallet != address(0));
-    require(_token != address(0));
+    require(_rate > 0, "rate is 0");
+    require(_wallet != address(0), "wallet address is owner");
+    require(_token != address(0), "token contract address is owner");
 
     rate = _rate;
     wallet = _wallet;
@@ -111,8 +111,8 @@ contract Crowdsale {
    * @param _weiAmount Value in wei involved in the purchase
    */
   function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-    require(_beneficiary != address(0));
-    require(_weiAmount != 0);
+    require(_beneficiary != address(0), "beneficiary is owner");
+    require(_weiAmount != 0, "weiAmount is 0");
   }
 
 }
