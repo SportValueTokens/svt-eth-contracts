@@ -25,7 +25,7 @@ contract('SVCTokenSwap', function (accounts) {
 
   let init = async () => {
     coinContract = await SVCoinContract.new({from: creatorAccount})
-    playerTokenContract = await PlayerTokenContract.new(thousandCoins, 'Lionel Messi Token', player_symbol, 'football', {from: creatorAccount})
+    playerTokenContract = await PlayerTokenContract.new(thousandCoins, 1, player_symbol, 'Lionel Messi Token', 'football', {from: creatorAccount})
     // give each user 10 SVC
     await coinContract.transfer(user1Account, tenCoins, {from: creatorAccount})
     await coinContract.transfer(user2Account, tenCoins, {from: creatorAccount})

@@ -36,6 +36,8 @@ contract('PlayerTokenFactory', function (accounts) {
       balance = await token.balanceOf.call(tokenFactory.address)
       console.log(`tokenFactory.address balance in ${player_symbol}: ${balance}`)
       expect(balance).to.eq.BN(0)
+      let id = await token.id.call()
+      expect(id).to.eq.BN(1)
     })
   })
 })

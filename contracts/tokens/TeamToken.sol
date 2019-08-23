@@ -14,10 +14,11 @@ contract TeamToken is AssetToken {
   /**
   * Constructor for a new Team Token.
   * @param initialBalance balance (18 decimals)
+  * @param _id number
   * @param _name name of footballer
   * @param _symbol token symbol
-  * @param _sport sport name (eg football)
+  * @param _market market name (eg football)
   */
-  constructor(uint initialBalance, string _name, string _symbol, string _sport)
-  AssetToken(initialBalance, _name, _symbol, _sport) public {}
+  constructor(uint initialBalance, uint32 _id, string _symbol, string _name, string _market)
+  AssetToken(initialBalance, _id, _symbol, _name, _market) public {}
 }

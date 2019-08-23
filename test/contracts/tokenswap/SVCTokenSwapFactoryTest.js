@@ -19,7 +19,7 @@ contract('SVCTokenSwapFactory', function (accounts) {
 
   let init = async () => {
     coinContract = await SVCoinContract.new({from: creatorAccount})
-    playerTokenContract = await PlayerTokenContract.new(thousandCoins, 'Lionel Messi Token', player_symbol, 'football', {from: creatorAccount})
+    playerTokenContract = await PlayerTokenContract.new(thousandCoins, 1, player_symbol, 'Lionel Messi Token', 'football', {from: creatorAccount})
     exchangeFactory = await SVCTokenSwapFactory.new('Football token swap', coinContract.address, 'football', {from: creatorAccount})
   }
 
