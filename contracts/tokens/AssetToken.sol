@@ -4,9 +4,9 @@ import "./MintableToken.sol";
 import "./BurnableToken.sol";
 
 /**
-Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
-
-This token represents a tradeable asset (player, team, ...)
+* Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
+*
+* This token represents a tradeable asset (player, team, ...)
 */
 contract AssetToken is MintableToken, BurnableToken {
 
