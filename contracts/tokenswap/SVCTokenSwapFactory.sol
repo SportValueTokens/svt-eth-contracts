@@ -7,7 +7,7 @@ import "../tokenswap/SVCTokenSwap.sol";
 * A contract factory to create new SVCTokenSwap instances for each token instance
 */
 contract SVCTokenSwapFactory is Ownable {
-  string public name;
+  uint32 public market_id;
   string public market;
   string public version = "0.1";
   address public coinAddress;
@@ -21,10 +21,15 @@ contract SVCTokenSwapFactory is Ownable {
     address indexed assetAddr
   );
 
-  constructor(string _name, address _coinAddress, string _market) public {
-    name = _name;
+  /**
+  * @param _coinAddress address of SVC contract
+  * @param _market_id id of the market
+  * @param _market market name
+  */
+  constructor(address _coinAddress, uint32 _market_id, string _market) public {
     coinAddress = _coinAddress;
     market = _market;
+    market_id = _market_id;
   }
 
   /**

@@ -7,9 +7,10 @@ import "./Ownable.sol";
 * This contract implements a Factory pattern to create player tokens for a specific market / sport
 */
 contract PlayerTokenFactory is Ownable {
-  string public name;
+  uint32 public market_id;
   string public market;
   string public version = "0.1";
+
   uint32 public lastId = 0;
   address[] public tokenList;
 
@@ -20,8 +21,12 @@ contract PlayerTokenFactory is Ownable {
     uint balance
   );
 
-  constructor(string _name, string _market) public {
-    name = _name;
+  /**
+  * @param _market_id id of the market
+  * @param _market name of the market
+  */
+  constructor(uint32 _market_id, string _market) public {
+    market_id = _market_id;
     market = _market;
   }
 

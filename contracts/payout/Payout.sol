@@ -18,7 +18,7 @@ contract Payout is Ownable {
   SportValueCoin svc;
   address payoutsAccount;
 
-  event Payout (
+  event PayoutSent (
     address indexed holder,
     uint32 assedId,
     uint payout
@@ -66,7 +66,7 @@ contract Payout is Ownable {
     }
     svc.transferFrom(payoutsAccount, msg.sender, amount);
     isPaid[msg.sender] = true;
-    emit Payout(msg.sender, token.id(), amount);
+    emit PayoutSent(msg.sender, token.id(), amount);
   }
 
   function updateWinners(address[] memory winningTokens, uint[] winningAmounts) public onlyOwner {

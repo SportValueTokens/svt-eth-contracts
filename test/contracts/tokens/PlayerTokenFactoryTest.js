@@ -17,7 +17,7 @@ contract('PlayerTokenFactory', function (accounts) {
   console.log(`creatorAccount address: ${creatorAccount}`)
 
   let init = async () => {
-    tokenFactory = await PlayerTokenFactory.new('Football tokens', 'football', {from: creatorAccount})
+    tokenFactory = await PlayerTokenFactory.new(1, 'football', {from: creatorAccount})
     console.log(`PlayerTokenFactory created at address: ${tokenFactory.address}`)
   }
 
