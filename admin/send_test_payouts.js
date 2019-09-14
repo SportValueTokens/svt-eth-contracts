@@ -13,6 +13,8 @@ async function updateWins (market) {
   web3Client.setWins(wins, conf.ethereum.markets[market].payoutAccount, conf.ethereum.ownerAccount)
 }
 
+// TODO mint tokens
+
 updateWins('football').then(() => {
   console.log('Football wins updated')
   return 0

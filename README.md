@@ -4,16 +4,18 @@
 
     npm install -g ganache-cli
     npm install
+    ganache-cli -e 10000
     npm test
     
 ## Deploy locally
 
-* Start testrpc
+* Start testrpc ```ganache-cli -e 10000```
 * Deploy the contracts using truffle: ```truffle migrate```
 * Then launch truffle console to play with the contracts: ```truffle console```  
 
 ## Deploy on remix
-```truffle-flattener [files]```
+```npm install -g truffle-flattener```
+```truffle-flattener contracts/**/*.sol```
 
 ## Deploy on test net (Ropsten)
 

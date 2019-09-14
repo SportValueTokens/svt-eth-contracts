@@ -162,28 +162,96 @@
       }
     ]
   },
-
-  "wins" : {
-    "football" : [
-      {"token": "","scores": 40},
-      {"token": "","scores": 30},
-      {"token": "","scores": 25},
-      {"token": "","scores": 20},
-      {"token": "","scores": 15}
+  "wins": {
+    "football": [
+      {
+        "token": "",
+        "scores": 40
+      },
+      {
+        "token": "",
+        "scores": 30
+      },
+      {
+        "token": "",
+        "scores": 25
+      },
+      {
+        "token": "",
+        "scores": 20
+      },
+      {
+        "token": "",
+        "scores": 15
+      }
     ],
-    "basketball" : [
-      {"token": "","scores": 40},
-      {"token": "","scores": 30},
-      {"token": "","scores": 25},
-      {"token": "","scores": 20},
-      {"token": "","scores": 15}
+    "basketball": [
+      {
+        "token": "",
+        "scores": 40
+      },
+      {
+        "token": "",
+        "scores": 30
+      },
+      {
+        "token": "",
+        "scores": 25
+      },
+      {
+        "token": "",
+        "scores": 20
+      },
+      {
+        "token": "",
+        "scores": 15
+      }
     ],
-    "cricket" : [
-      {"token": "","scores": 40},
-      {"token": "","scores": 30},
-      {"token": "","scores": 25},
-      {"token": "","scores": 20},
-      {"token": "","scores": 15}
+    "cricket": [
+      {
+        "token": "",
+        "scores": 40
+      },
+      {
+        "token": "",
+        "scores": 30
+      },
+      {
+        "token": "",
+        "scores": 25
+      },
+      {
+        "token": "",
+        "scores": 20
+      },
+      {
+        "token": "",
+        "scores": 15
+      }
     ]
+  },
+  "ethereum": {
+    "SVCAddr": "",
+    "ownerAccount": "",
+    "markets": {
+      "football": {
+        "payoutAccount": "",
+        "tokenSwapFactoryAddr": "",
+        "tokenFactoryAddr": "",
+        "payoutContractAddr": ""
+      },
+      "basketball": {
+        "payoutAccount": "",
+        "tokenSwapFactoryAddr": "",
+        "tokenFactoryAddr": "",
+        "payoutContractAddr": ""
+      },
+      "cricket": {
+        "payoutAccount": "",
+        "tokenSwapFactoryAddr": "",
+        "tokenFactoryAddr": "",
+        "payoutContractAddr": ""
+      }
+    }
   }
 }

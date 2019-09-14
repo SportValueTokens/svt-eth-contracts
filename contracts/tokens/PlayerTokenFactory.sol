@@ -33,13 +33,13 @@ contract PlayerTokenFactory is Ownable {
   /**
   * Creates a new PlayerToken and stores the address in tokenList
   */
-  function createToken(uint initialBalance, string _name, string _symbol) public onlyOwner returns (address token) {
+  function createToken(uint initialBalance, string _name, string _symbol) public onlyOwner {
+    // TODO check symbol does not exist already
     lastId++;
     PlayerToken newToken = new PlayerToken(0, lastId, _symbol, _name, market);
     newToken.mint(owner, initialBalance);
     newToken.transferOwnership(owner);
     tokenList.push(newToken);
     emit AssetCreated(msg.sender, newToken, _symbol, initialBalance);
-    return newToken;
   }
 }
