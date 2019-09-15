@@ -34,9 +34,10 @@ module.exports = async function (deployer, network, accounts) {
     // const tokenSwapFactoryCricket = await deployer.deploy(SVCTokenSwapFactory, SportValueCoin.address, 3, 'cricket')
     // await deployer.deploy(Payout, 3, 'cricket', SportValueCoin.address, cricketPayoutsAccount.address)
 
-    web3Client.deployAssets(conf.tokens.football, tokenSwapFactoryFootball.address, tokenFactoryFootball.address, accounts[0])
+    await web3Client.deployAssets(conf.tokens.football, tokenSwapFactoryFootball.address, tokenFactoryFootball.address, accounts[0])
     // web3Client.deployAssets(conf.tokens.basketball, tokenSwapFactoryBasketball.address, tokenFactoryBasketball.address, accounts[0])
     // web3Client.deployAssets(conf.tokens.cricket, tokenSwapFactoryCricket.address, tokenFactoryCricket.address, accounts[0])
+    console.log(`Assets deployed`)
   } else {
     console.log('We are not happy to deploy with truffle on main net')
   }
