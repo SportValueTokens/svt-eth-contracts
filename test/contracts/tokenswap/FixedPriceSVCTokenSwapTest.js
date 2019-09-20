@@ -1,0 +1,148 @@
+const SVCoinContract = artifacts.require('./tokens/SportValueCoin.sol')
+const MintableToken = artifacts.require('tokens/MintableToken.sol')
+const FixedPriceSVCTokenSwap = artifacts.require('tokenswap/FixedPriceSVCTokenSwap.sol')
+const chai = require('chai')
+const expect = chai.expect
+const BN = require('bn.js')
+const bnChai = require('bn-chai')
+chai.use(bnChai(BN))
+const helpers = require('../helpers')
+const expectRevert = helpers.expectRevert
+
+contract('FixedPriceSVCTokenSwap', function (accounts) {
+  let svc
+  let erc20
+  let exchangeContract
+  const creatorAccount = accounts[0]
+  const user1Account = accounts[1]
+  const user2Account = accounts[2]
+  const DECIMALS = 18
+  const oneCoin = new BN(1).mul(new BN(10).pow(new BN(DECIMALS)))
+  const twoCoins = new BN(2).mul(new BN(10).pow(new BN(DECIMALS)))
+  const tenCoins = new BN(10).mul(new BN(10).pow(new BN(DECIMALS)))
+  const hundredCoins = new BN(100).mul(new BN(10).pow(new BN(DECIMALS)))
+  const thousandCoins = new BN(1000).mul(new BN(10).pow(new BN(DECIMALS)))
+
+  let init = async () => {
+    svc = await SVCoinContract.new({from: creatorAccount})
+    erc20 = await MintableToken.new()
+    await erc20.mint(creatorAccount, thousandCoins)
+    // give each user 10 SVC
+    await svc.transfer(user1Account, tenCoins, {from: creatorAccount})
+    await svc.transfer(user2Account, tenCoins, {from: creatorAccount})
+
+    exchangeContract = await FixedPriceSVCTokenSwap.new(svc.address, erc20.address, 'TST', {from: creatorAccount})
+
+    // transfer assets to user2
+    erc20.transfer(user2Account, twoCoins, {from: creatorAccount})
+
+    // transfer SVC and asset to exchange
+    await svc.transfer(exchangeContract.address, tenCoins, {from: creatorAccount})
+    await erc20.transfer(exchangeContract.address, tenCoins, {from: creatorAccount})
+    let exchangeSVCBalance = await svc.balanceOf.call(exchangeContract.address)
+    console.log('FixedPriceSVCTokenSwap initial SVC balance', helpers.toRealTokenNumber(exchangeSVCBalance).toString())
+  }
+
+  describe('Asset purchase', () => {
+    beforeEach(init)
+
+    it('a user should be able to buy an asset with SVC', async () => {
+      // then buy 1 player token
+      await svc.approve(exchangeContract.address, thousandCoins, {from: user1Account})
+      await exchangeContract.buy(oneCoin, {from: user1Account})
+
+      // we expect 1 token bought 1.00 SVC to be debited from user1 acc
+      let coinBalance = await svc.balanceOf.call(user1Account)
+      console.log('User1 SVC balance after purchase: ', coinBalance.toString())
+      expect(coinBalance).to.eq.BN(new BN(9).mul(oneCoin))
+      let assetBalance = await erc20.balanceOf.call(user1Account)
+      console.log('User1 Asset balance after purchase: ', assetBalance.toString())
+      expect(assetBalance).to.eq.BN(oneCoin)
+    })
+
+    it('should fail if buyer has no money', async () => {
+      const user3Account = accounts[3]
+      // user3 approves the contract to spend SVC
+      await svc.approve(exchangeContract.address, oneCoin, {from: user3Account})
+      await expectRevert(exchangeContract.buy(oneCoin, {from: user3Account}))
+    })
+
+    it('should fail if contract has no stock', async () => {
+      await svc.approve(exchangeContract.address, thousandCoins, {from: user1Account})
+      await expectRevert(exchangeContract.buy(hundredCoins, {from: user1Account}))
+    })
+
+    it('should fail if buyer has not allowed transfers', async () => {
+      await expectRevert(exchangeContract.buy(oneCoin, {from: user1Account}))
+    })
+
+    // should not be able to have 0 assets
+  })
+
+  describe('Asset sale', () => {
+    beforeEach(init)
+
+    it('a user should be able to sell an asset for SVC', async () => {
+      // user2 needs to allow the exchange contract to spend his tokens
+      await erc20.approve(exchangeContract.address, twoCoins, {from: user2Account})
+
+      // then sell 1 token
+      await exchangeContract.sell(oneCoin, {from: user2Account})
+
+      // we expect 1 token to be sold for 1 SVC
+      let coinBalance = await svc.balanceOf.call(user2Account)
+      console.log('User2 SVC balance after purchase: ', coinBalance.toString())
+      expect(coinBalance).to.eq.BN(new BN(1100).mul(new BN(10).pow(new BN(DECIMALS - 2))))
+      let assetBalance = await erc20.balanceOf.call(user2Account)
+      console.log('User2 Asset balance after purchase: ', assetBalance.toString())
+      expect(assetBalance).to.eq.BN(oneCoin)
+    })
+
+    it('should fail if seller has no tokens', async () => {
+      const user3Account = accounts[3]
+      // user3 approves the contract to spend player tokens
+      await erc20.approve(exchangeContract.address, oneCoin, {from: user3Account})
+      await expectRevert(exchangeContract.sell(oneCoin, {from: user3Account}))
+    })
+
+    it('should fail if contract has no stock', async () => {
+      // user1 approve the contract to spend SVC
+      await erc20.approve(exchangeContract.address, oneCoin, {from: user1Account})
+      await expectRevert(exchangeContract.sell(hundredCoins, {from: user1Account}))
+    })
+
+    it('should fail if seller has not allowed transfers', async () => {
+      await expectRevert(exchangeContract.sell(oneCoin, {from: user2Account}))
+    })
+
+    // should not be able to have 0 assets
+  })
+
+  describe('removeAssets', () => {
+    beforeEach(init)
+
+    it('should remove assets from the exchange', async () => {
+      await exchangeContract.removeAssets(twoCoins, {from: creatorAccount})
+
+      // we expect 2 tokens to be transferred
+      let assetBalance = await erc20.balanceOf.call(exchangeContract.address)
+      console.log('Exchange Asset balance: ', assetBalance.toString())
+      expect(assetBalance).to.eq.BN(new BN(8).mul(oneCoin))
+    })
+
+    it('should remove SVC from the exchange', async () => {
+      await exchangeContract.removeSVC(twoCoins, {from: creatorAccount})
+
+      // we expect 2 tokens to be transferred
+      let coinBalance = await svc.balanceOf.call(exchangeContract.address)
+      console.log('Exchange SVC balance: ', coinBalance.toString())
+      expect(coinBalance).to.eq.BN(new BN(8).mul(oneCoin))
+    })
+
+    it('should fail if not enough assets', async () => {
+      await expectRevert(exchangeContract.removeAssets(thousandCoins.mul(new BN(2)), {from: creatorAccount}))
+      await expectRevert(exchangeContract.removeSVC(thousandCoins.mul(new BN(2)), {from: creatorAccount}))
+    })
+
+  })
+})

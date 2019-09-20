@@ -1,8 +1,12 @@
 const Web3 = require('web3')
 const truffleCfg = require('../truffle.js')
 const SportValueCoin = artifacts.require('tokens/SportValueCoin.sol')
+const MintableToken = artifacts.require('tokens/MintableToken.sol')
 const PlayerTokenFactory = artifacts.require('tokens/PlayerTokenFactory.sol')
 const SVCTokenSwapFactory = artifacts.require('tokenswap/SVCTokenSwapFactory.sol')
+const FixedPriceSVCTokenSwap = artifacts.require('tokenswap/FixedPriceSVCTokenSwap.sol')
+const SVCExclusiveSaleETH = artifacts.require('crowdsale/SVCExclusiveSaleETH.sol')
+const SVCExclusiveSaleERC20 = artifacts.require('crowdsale/SVCExclusiveSaleERC20.sol')
 const Payout = artifacts.require('payout/Payout.sol')
 const web3Client = require('../lib/web3-client')
 const conf = require('../conf')
@@ -10,7 +14,8 @@ const conf = require('../conf')
 // Deploy only on  test ad dev envs with this
 module.exports = async function (deployer, network, accounts) {
   console.log('Truffle deployer network:', network)
-  if (network === 'development') {
+  // deploy some test tokens if in dev
+  if (network === 'development' && process.env.NODE_ENV !== 'test') {
     const web3 = new Web3(truffleCfg.networks[network])
     const footballPayoutsAccount = web3.eth.accounts.create()
     console.log('footballPayoutsAccount: ', footballPayoutsAccount.address)
@@ -20,6 +25,16 @@ module.exports = async function (deployer, network, accounts) {
     console.log('cricketPayoutsAccount: ', cricketPayoutsAccount.address)
 
     await deployer.deploy(SportValueCoin)
+    console.log('SportValueCoin deployed at: ', SportValueCoin.address)
+    await deployer.deploy(MintableToken)
+    console.log('Test MintableToken deployed at: ', MintableToken.address)
+    await deployer.deploy(SVCExclusiveSaleETH, 220, accounts[0], SportValueCoin.address)
+    console.log('SVCExclusiveSaleE deployed at: ', SVCExclusiveSaleETH.address)
+    await deployer.deploy(SVCExclusiveSaleERC20, 10000, accounts[0], MintableToken.address, SportValueCoin.address, 'TST')
+    console.log('SVCExclusiveSaleERC20 deployed at: ', SVCExclusiveSaleERC20.address)
+    await deployer.deploy(FixedPriceSVCTokenSwap, SportValueCoin.address, MintableToken.address, 'TSD')
+    console.log('FixedPriceSVCTokenSwap deployed at: ', FixedPriceSVCTokenSwap.address)
+
     const tokenFactoryFootball = await deployer.deploy(PlayerTokenFactory, 1, 'football')
     console.log('Football PlayerTokenFactory deployed at: ', PlayerTokenFactory.address)
     const tokenSwapFactoryFootball = await deployer.deploy(SVCTokenSwapFactory, SportValueCoin.address, 1, 'football')
@@ -38,7 +53,5 @@ module.exports = async function (deployer, network, accounts) {
     // web3Client.deployAssets(conf.tokens.basketball, tokenSwapFactoryBasketball.address, tokenFactoryBasketball.address, accounts[0])
     // web3Client.deployAssets(conf.tokens.cricket, tokenSwapFactoryCricket.address, tokenFactoryCricket.address, accounts[0])
     console.log(`Assets deployed`)
-  } else {
-    console.log('We are not happy to deploy with truffle on main net')
   }
 }

@@ -30,7 +30,7 @@ contract('SVCTokenSwapFactory', function (accounts) {
       await exchangeFactory.createExchange(playerTokenContract.address, {from: creatorAccount})
       let exchangeAddress = await exchangeFactory.getExchange.call(playerTokenContract.address, {from: creatorAccount})
       let exchange = await SVCTokenSwap.at(exchangeAddress)
-      let assetAddress = await exchange.getAssetAddress.call({from: creatorAccount})
+      let assetAddress = await exchange.asset.call({from: creatorAccount})
       expect(assetAddress).to.equal(playerTokenContract.address)
       let token = await exchangeFactory.tokenList.call(0)
       expect(token).to.equal(playerTokenContract.address)

@@ -52,6 +52,8 @@ contract Payout is Ownable {
     return (token.balanceOf(owner) * winsMap[token]) / token.totalSupply();
   }
 
+  // TODO estimate payouts
+
   function getPayment(AssetToken[] memory tokens) public {
     uint amount = 0;
     for (uint32 i = 0; i < tokens.length; i++) {
