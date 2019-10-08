@@ -1,4 +1,5 @@
 const Web3 = require('web3')
+const BN = require('bn.js')
 const truffleCfg = require('../truffle.js')
 const SportValueCoin = artifacts.require('tokens/SportValueCoin.sol')
 const MintableToken = artifacts.require('tokens/MintableToken.sol')
@@ -26,6 +27,9 @@ module.exports = async function (deployer, network, accounts) {
 
     await deployer.deploy(SportValueCoin)
     console.log('SportValueCoin deployed at: ', SportValueCoin.address)
+    let svc = await SportValueCoin.deployed()
+    await svc.transfer(accounts[1], new BN(10).pow(new BN(19)).toString(), {from: accounts[0]})
+
     await deployer.deploy(MintableToken)
     console.log('Test MintableToken deployed at: ', MintableToken.address)
     await deployer.deploy(SVCExclusiveSaleETH, 220, accounts[0], SportValueCoin.address)
