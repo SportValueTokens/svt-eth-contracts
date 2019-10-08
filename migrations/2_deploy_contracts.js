@@ -24,11 +24,13 @@ module.exports = async function (deployer, network, accounts) {
     console.log('basketballPayoutsAccount: ', basketballPayoutsAccount.address)
     const cricketPayoutsAccount = web3.eth.accounts.create()
     console.log('cricketPayoutsAccount: ', cricketPayoutsAccount.address)
+    const userAccount = web3.eth.accounts.create()
+    console.log('userAccount: ', userAccount)
 
     await deployer.deploy(SportValueCoin)
     console.log('SportValueCoin deployed at: ', SportValueCoin.address)
     let svc = await SportValueCoin.deployed()
-    await svc.transfer(accounts[1], new BN(10).pow(new BN(19)).toString(), {from: accounts[0]})
+    await svc.transfer(userAccount.address, new BN(10).pow(new BN(19)).toString(), {from: accounts[0]})
 
     await deployer.deploy(MintableToken)
     console.log('Test MintableToken deployed at: ', MintableToken.address)
