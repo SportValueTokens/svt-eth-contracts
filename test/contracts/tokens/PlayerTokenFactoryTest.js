@@ -38,6 +38,8 @@ contract('PlayerTokenFactory', function (accounts) {
       expect(balance).to.eq.BN(0)
       let id = await token.id.call()
       expect(id).to.eq.BN(1)
+      let tokenAddrFromMap = await tokenFactory.tokenAddr.call(id)
+      expect(tokenAddrFromMap).to.equal(tokenAddr)
     })
   })
 })
