@@ -26,6 +26,8 @@ contract('PlayerTokenFactory', function (accounts) {
 
     it('should create a new token', async () => {
       await tokenFactory.createToken(thousandCoins, 'Lionel Messi Token', player_symbol, {from: creatorAccount})
+      let nbTokens = await tokenFactory.getTokenCount.call()
+      expect(nbTokens).to.eq.BN(new BN(1))
       let tokenAddr = await tokenFactory.tokenList.call(0)
       console.log(`Token ${player_symbol} created. Address: ${tokenAddr}`)
       let token = await PlayerTokenContract.at(tokenAddr)

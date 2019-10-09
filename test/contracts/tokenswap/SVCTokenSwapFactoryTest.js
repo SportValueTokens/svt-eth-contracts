@@ -28,6 +28,8 @@ contract('SVCTokenSwapFactory', function (accounts) {
 
     it('should create a new TokenSwap', async () => {
       await tokenSwapFactory.createTokenSwap(playerTokenContract.address, {from: creatorAccount})
+      let nbTokens = await tokenSwapFactory.getTokenCount.call()
+      expect(nbTokens).to.eq.BN(new BN(1))
       let tokenSwapFactoryAddress = await tokenSwapFactory.tokenSwaps.call(playerTokenContract.address, {from: creatorAccount})
       let tokenSwap = await SVCTokenSwap.at(tokenSwapFactoryAddress)
       let assetAddress = await tokenSwap.asset.call({from: creatorAccount})

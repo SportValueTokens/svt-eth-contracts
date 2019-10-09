@@ -33,6 +33,14 @@ contract SVCTokenSwapFactory is Ownable {
   }
 
   /**
+  * This is needed because there is no way to return an array in a solidity method.
+  * You have to call tokenList(i) to get an element of the array
+  */
+  function getTokenCount() public view returns(uint) {
+    return tokenList.length;
+  }
+
+  /**
   * Create a new SVCTokenSwap contract for the give asset ERC20 token
   * @param asset the address of the ERC20 contract of the asset
   */

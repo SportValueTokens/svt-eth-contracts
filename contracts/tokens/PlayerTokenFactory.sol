@@ -37,6 +37,14 @@ contract PlayerTokenFactory is Ownable {
   }
 
   /**
+  * This is needed because there is no way to return an array in a solidity method.
+  * You have to call tokenList(i) to get an element of the array
+  */
+  function getTokenCount() public view returns(uint) {
+    return tokenList.length;
+  }
+
+  /**
   * Creates a new PlayerToken and stores the address in tokenList
   */
   function createToken(uint initialBalance, string _name, string _symbol) public onlyOwner {
