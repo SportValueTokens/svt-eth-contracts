@@ -11,7 +11,7 @@ chai.use(bnChai(BN))
 contract('SVCTokenSwapFactory', function (accounts) {
   let coinContract
   let playerTokenContract
-  let exchangeFactory
+  let tokenSwapFactory
   const creatorAccount = accounts[0]
   const DECIMALS = 18
   const thousandCoins = new BN(1000).mul(new BN(10).pow(new BN(DECIMALS)))
@@ -20,19 +20,19 @@ contract('SVCTokenSwapFactory', function (accounts) {
   let init = async () => {
     coinContract = await SVCoinContract.new({from: creatorAccount})
     playerTokenContract = await PlayerTokenContract.new(thousandCoins, 1, player_symbol, 'Lionel Messi Token', 'football', {from: creatorAccount})
-    exchangeFactory = await SVCTokenSwapFactory.new(coinContract.address, 1, 'football', {from: creatorAccount})
+    tokenSwapFactory = await SVCTokenSwapFactory.new(coinContract.address, 1, 'football', {from: creatorAccount})
   }
 
-  describe('createExchange', () => {
+  describe('createTokenSwap', () => {
     beforeEach(init)
 
-    it('should create a new Exchange', async () => {
-      await exchangeFactory.createExchange(playerTokenContract.address, {from: creatorAccount})
-      let exchangeAddress = await exchangeFactory.getExchange.call(playerTokenContract.address, {from: creatorAccount})
-      let exchange = await SVCTokenSwap.at(exchangeAddress)
-      let assetAddress = await exchange.asset.call({from: creatorAccount})
+    it('should create a new TokenSwap', async () => {
+      await tokenSwapFactory.createTokenSwap(playerTokenContract.address, {from: creatorAccount})
+      let tokenSwapFactoryAddress = await tokenSwapFactory.tokenSwaps.call(playerTokenContract.address, {from: creatorAccount})
+      let tokenSwap = await SVCTokenSwap.at(tokenSwapFactoryAddress)
+      let assetAddress = await tokenSwap.asset.call({from: creatorAccount})
       expect(assetAddress).to.equal(playerTokenContract.address)
-      let token = await exchangeFactory.tokenList.call(0)
+      let token = await tokenSwapFactory.tokenList.call(0)
       expect(token).to.equal(playerTokenContract.address)
     })
   })

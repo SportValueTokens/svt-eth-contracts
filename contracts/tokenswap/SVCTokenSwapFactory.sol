@@ -12,10 +12,10 @@ contract SVCTokenSwapFactory is Ownable {
   string public version = "0.1";
   address public coinAddress;
   // token address => Exchange contracts
-  mapping(address => SVCTokenSwap) private exchanges;
+  mapping(address => SVCTokenSwap) public tokenSwaps;
   address[] public tokenList;
 
-  event ExchangeCreated (
+  event TokenSwapCreated (
     address indexed creator,
     address indexed addr,
     address indexed assetAddr
@@ -36,17 +36,13 @@ contract SVCTokenSwapFactory is Ownable {
   * Create a new SVCTokenSwap contract for the give asset ERC20 token
   * @param asset the address of the ERC20 contract of the asset
   */
-  function createExchange(address asset) public onlyOwner returns (address exchange) {
+  function createTokenSwap(address asset) public onlyOwner returns (address) {
     require(asset != address(0));
-    SVCTokenSwap newExchange = new SVCTokenSwap(coinAddress, asset);
-    newExchange.transferOwnership(owner);
-    exchanges[asset] = newExchange;
+    SVCTokenSwap tokenSwap = new SVCTokenSwap(coinAddress, asset);
+    tokenSwap.transferOwnership(owner);
+    tokenSwaps[asset] = tokenSwap;
     tokenList.push(asset);
-    emit ExchangeCreated(msg.sender, newExchange, asset);
-    return newExchange;
-  }
-
-  function getExchange(address asset) public view returns (address exchange) {
-    return exchanges[asset];
+    emit TokenSwapCreated(msg.sender, tokenSwap, asset);
+    return tokenSwap;
   }
 }
