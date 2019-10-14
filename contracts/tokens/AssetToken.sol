@@ -11,7 +11,6 @@ import "./BurnableToken.sol";
 contract AssetToken is MintableToken, BurnableToken {
 
   // meta data
-  string public constant version = '1.0';
   uint public constant decimals = 18;
 
   string public symbol;

@@ -11,7 +11,7 @@ contract SVCTokenSwapFactory is Ownable {
   string public market;
   string public version = "0.1";
   address public coinAddress;
-  // token address => Exchange contracts
+  // token address => TokenSwap contracts
   mapping(address => SVCTokenSwap) public tokenSwaps;
   address[] public tokenList;
 

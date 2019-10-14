@@ -11,7 +11,7 @@ import "../tokens/Ownable.sol";
 contract Payout is Ownable {
 
   // meta data
-  string public constant version = '1.0';
+  string public constant version = '0.1';
   uint32 public market_id;
   string public market;
 
