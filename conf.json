@@ -10,6 +10,18 @@
         "symbol": "JSNC",
         "name": "Jadon Sancho",
         "amount": 1000
+      }
+    ],
+    "football2": [
+      {
+        "symbol": "NMR",
+        "name": "Neymar",
+        "amount": 1000
+      },
+      {
+        "symbol": "JSNC",
+        "name": "Jadon Sancho",
+        "amount": 1000
       },
       {
         "symbol": "PGB",
