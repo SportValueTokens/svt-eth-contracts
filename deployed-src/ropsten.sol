@@ -875,12 +875,11 @@ pragma solidity 0.4.24;
 contract Payout is Ownable {
 
   // meta data
-  string public constant version = '0.1';
+  string public constant version = '0.1.2';
   uint32 public market_id;
   string public market;
 
   SportValueCoin svc;
-  address payoutsAccount;
 
   event PayoutSent (
     address indexed holder,
@@ -902,35 +901,31 @@ contract Payout is Ownable {
   /**
   * @param _market_id id of the market
   * @param _market market name
-  * @param svcAddress SVC coin contract address
-  * @param _payoutsAccount address for payouts account, holding funds for payouts
+  * @param _svcAddress SVC coin contract address
   */
-  constructor(uint32 _market_id, string _market, address svcAddress, address _payoutsAccount) public {
+  constructor(uint32 _market_id, string _market, address _svcAddress) public {
     market_id = _market_id;
     market = _market;
-    svc = SportValueCoin(svcAddress);
-    payoutsAccount = _payoutsAccount;
+    svc = SportValueCoin(_svcAddress);
   }
 
-  function calcPayout(AssetToken token, address owner) public view returns (uint){
-    return (token.balanceOf(owner) * winsMap[token]) / token.totalSupply();
+  function calcPayoutPerToken(AssetToken token) public view returns (uint){
+    return (token.balanceOf(msg.sender) * winsMap[token]) / token.totalSupply();
   }
-
-  // TODO estimate payouts
 
   function getPayment(AssetToken[] memory tokens) public {
+    require(!isPaid[msg.sender],"already paid");
     uint amount = 0;
     for (uint32 i = 0; i < tokens.length; i++) {
       AssetToken token = tokens[i];
       if (token.balanceOf(msg.sender) > 0) {
         uint win = winsMap[token];
-        require(!isPaid[msg.sender]);
         if (win != 0) {
-          amount += calcPayout(token, msg.sender);
+          amount += calcPayoutPerToken(token);
         }
       }
     }
-    svc.transferFrom(payoutsAccount, msg.sender, amount);
+    svc.transfer(msg.sender, amount);
     isPaid[msg.sender] = true;
     emit PayoutSent(msg.sender, token.id(), amount);
   }
@@ -1331,7 +1326,7 @@ contract SVCTokenSwapFactory is Ownable {
   string public market;
   string public version = "0.1";
   address public coinAddress;
-  // token address => Exchange contracts
+  // token address => TokenSwap contracts
   mapping(address => SVCTokenSwap) public tokenSwaps;
   address[] public tokenList;
 

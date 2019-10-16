@@ -17,7 +17,6 @@ contract('Payout', function (accounts) {
   const creatorAccount = accounts[0]
   const user1Account = accounts[1]
   const user2Account = accounts[2]
-  const payoutAccount = accounts[3]
   const DECIMALS = 18
   const oneCoin = new BN(1).mul(new BN(10).pow(new BN(DECIMALS)))
   const twoCoins = new BN(2).mul(new BN(10).pow(new BN(DECIMALS)))
@@ -31,7 +30,7 @@ contract('Payout', function (accounts) {
     player2TokenContract = await PlayerTokenContract.new(thousandCoins, 2, 'NMR', 'Neymar Token', 'football', {from: creatorAccount})
     player3TokenContract = await PlayerTokenContract.new(thousandCoins, 3, 'PGB', 'Pogba Token', 'football', {from: creatorAccount})
 
-    payoutContract = await PayoutContract.new(1, 'football', coinContract.address, payoutAccount, {from: creatorAccount})
+    payoutContract = await PayoutContract.new(1, 'football', coinContract.address, {from: creatorAccount})
 
     // transfer assets to users
     player3TokenContract.transfer(user1Account, twoCoins)
@@ -39,9 +38,8 @@ contract('Payout', function (accounts) {
     player2TokenContract.transfer(user2Account, oneCoin)
     player3TokenContract.transfer(user2Account, oneCoin)
 
-    // transfer SVC to payout account and approve contract to be able to pay with it
-    await coinContract.transfer(payoutAccount, hundredCoins, {from: creatorAccount})
-    await coinContract.approve(payoutContract.address, hundredCoins, {from: payoutAccount})
+    // transfer SVC to payout contract to be able to pay with it
+    await coinContract.transfer(payoutContract.address, hundredCoins, {from: creatorAccount})
   }
 
   describe('updateWinners', () => {
@@ -81,20 +79,20 @@ contract('Payout', function (accounts) {
     })
   })
 
-  describe('calcPayout', () => {
+  describe('calcPayoutPerToken', () => {
     beforeEach(init)
 
     it('should calculate payouts winners', async () => {
       let res = await payoutContract.updateWinners([player1TokenContract.address, player2TokenContract.address], [twoCoins, oneCoin], {from: creatorAccount})
       assert.ok(res)
 
-      let payout = await payoutContract.calcPayout(player1TokenContract.address, user1Account, {from: user1Account})
+      let payout = await payoutContract.calcPayoutPerToken(player1TokenContract.address, {from: user1Account})
       console.log('user1 payout for player1: ', payout)
       expect(payout).to.eq.BN(0)
-      payout = await payoutContract.calcPayout(player1TokenContract.address, user2Account, {from: user2Account})
+      payout = await payoutContract.calcPayoutPerToken(player1TokenContract.address, {from: user2Account})
       console.log('user2 payout for player1: ', payout)
       expect(payout).to.eq.BN(twoCoins.div(new BN(1000)))
-      payout = await payoutContract.calcPayout(player2TokenContract.address, user2Account, {from: user2Account})
+      payout = await payoutContract.calcPayoutPerToken(player2TokenContract.address, {from: user2Account})
       console.log('user2 payout for player2: ', payout)
       expect(payout).to.eq.BN(oneCoin.div(new BN(1000)))
     })
