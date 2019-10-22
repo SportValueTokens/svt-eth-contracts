@@ -21,17 +21,3 @@ updateWins('football').then(() => {
 }).catch((err) => {
   console.log('Football wins updates failed', err)
 })
-
-updateWins('basketball').then(() => {
-  console.log('Basketball wins updated')
-  return 0
-}).catch((err) => {
-  console.log('Basketball wins updates failed', err)
-})
-
-updateWins('cricket').then(() => {
-  console.log('Cricket wins updated')
-  return 0
-}).catch((err) => {
-  console.log('Cricket wins updates failed', err)
-})
