@@ -11,7 +11,7 @@ import "../tokens/SafeMath.sol";
 * The idea is to keep stock of assets and currency and calculate price based on the rations of asset/currency
 */
 contract SVCExchange is Ownable {
-  using SafeMath for uint256;
+  using SafeMath for uint;
 
   string public version = '0.1';
   uint32 public market_id;
@@ -21,6 +21,8 @@ contract SVCExchange is Ownable {
   uint public constant DECIMALS = 4;
 
   SportValueCoin public svc;
+  // TODO virtual SVC accounts for each pair
+  mapping (address => uint) private svcBalanceOf;
 
   event TokenPurchase(
     address indexed purchaser,
@@ -47,6 +49,14 @@ contract SVCExchange is Ownable {
   }
 
   /**
+  * Returns balance of SVC for a given asset (token)
+  * @param asset the address of the ERC20 token contract
+  */
+  function balanceOf(address asset) public view returns (uint) {
+    return svcBalanceOf[asset];
+  }
+
+  /**
   * Calculates the price of the asset in SVC coins
   * @param asset the address of the token
   * @param amount amount of tokens to trade
@@ -54,7 +64,7 @@ contract SVCExchange is Ownable {
   */
   function getAssetPrice(AssetToken asset, uint amount, bool purchase) public view returns (uint) {
     uint assetBalance = asset.balanceOf(this);
-    uint coinBalance = svc.balanceOf(this);
+    uint coinBalance = svcBalanceOf[asset];
     if (purchase) {
       assetBalance = assetBalance.sub(amount);
     } else {
@@ -82,6 +92,9 @@ contract SVCExchange is Ownable {
     // get paid in SVC
     require(svc.transferFrom(msg.sender, this, nbCoins), "Failed SVC transfer from buyer to SVCExchange");
 
+    // update virtual balance of SVC for the token
+    svcBalanceOf[tokenAddr] = svcBalanceOf[tokenAddr].add(nbCoins);
+
     // sending the tokens to the buyer
     require(asset.transfer(msg.sender, amount), "Failed asset transfer from exchange to buyer");
 
@@ -100,7 +113,7 @@ contract SVCExchange is Ownable {
     uint nbCoins = price.mul(amount).div(10 ** DECIMALS);
 
     // check how many SVC the contract owns
-    uint availableSVCBalance = svc.balanceOf(this);
+    uint availableSVCBalance = svcBalanceOf[tokenAddr];
     require(nbCoins <= availableSVCBalance, "Not enough SVC in stock");
 
     // transfer assets to the contract
@@ -109,7 +122,27 @@ contract SVCExchange is Ownable {
     // transfer SVC
     require(svc.transfer(msg.sender, nbCoins), "Failed SVC transfer from SVCExchange to seller");
 
+    // update virtual balance of SVC for the token
+    svcBalanceOf[tokenAddr] = svcBalanceOf[tokenAddr].sub(nbCoins);
+
     emit TokenSale(msg.sender, asset, amount, price, nbCoins);
+  }
+
+  /**
+  * Add initial liquidity for a new token
+  * The caller need to have authorised the contract to transfer SVC and Assets
+  */
+  function initToken(address tokenAddr, uint nbCoins, uint nbAssets) public onlyOwner {
+    AssetToken asset = AssetToken(tokenAddr);
+
+    // transfer assets to the contract
+    require(asset.transferFrom(msg.sender, this, nbAssets), "Failed asset transfer from caller to SVCExchange");
+
+    // transfer SVC to the contract
+    require(svc.transferFrom(msg.sender, this, nbCoins), "Failed SVC transfer from caller to SVCExchange");
+
+    // update virtual balance of SVC for the token
+    svcBalanceOf[tokenAddr] = nbCoins;
   }
 
   /**
@@ -119,7 +152,7 @@ contract SVCExchange is Ownable {
   function addLiquidity(address tokenAddr, uint nbCoins) public onlyOwner {
     AssetToken asset = AssetToken(tokenAddr);
     uint assetBalance = asset.balanceOf(this);
-    uint coinBalance = svc.balanceOf(this);
+    uint coinBalance = svcBalanceOf[tokenAddr];
 
     uint nbAssetsToAdd = assetBalance.mul(nbCoins).div(coinBalance);
 
@@ -128,6 +161,9 @@ contract SVCExchange is Ownable {
 
     // transfer SVC to the contract
     require(svc.transferFrom(msg.sender, this, nbCoins), "Failed SVC transfer from caller to SVCExchange");
+
+    // update virtual balance of SVC for the token
+    svcBalanceOf[tokenAddr] = svcBalanceOf[tokenAddr].add(nbCoins);
   }
 
   /**
@@ -136,7 +172,7 @@ contract SVCExchange is Ownable {
   function removeLiquidity(address tokenAddr, uint nbCoins) public onlyOwner {
     AssetToken asset = AssetToken(tokenAddr);
     uint assetBalance = asset.balanceOf(this);
-    uint coinBalance = svc.balanceOf(this);
+    uint coinBalance = svcBalanceOf[tokenAddr];
     require(nbCoins <= coinBalance, "Not enough SVC owned by the contract");
     uint nbAssetsToRemove = assetBalance.mul(nbCoins).div(coinBalance);
     require(nbAssetsToRemove <= assetBalance, "Not enough assets owned by the contract");
@@ -146,6 +182,9 @@ contract SVCExchange is Ownable {
 
     // transfer SVC to the sender
     require(svc.transfer(msg.sender, nbCoins), "Failed SVC transfer to caller from SVCExchange");
+
+    // update virtual balance of SVC for the token
+    svcBalanceOf[tokenAddr] = svcBalanceOf[tokenAddr].sub(nbCoins);
   }
 
 
