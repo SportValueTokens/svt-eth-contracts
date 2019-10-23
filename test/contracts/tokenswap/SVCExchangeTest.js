@@ -30,7 +30,7 @@ contract('SVCExchange', function (accounts) {
     await svc.transfer(user1Account, tenCoins, {from: creatorAccount})
     await svc.transfer(user2Account, tenCoins, {from: creatorAccount})
 
-    exchange = await SVCExchange.new(svc.address, {from: creatorAccount})
+    exchange = await SVCExchange.new(1, 'football', svc.address, {from: creatorAccount})
 
     // transfer assets to user2
     token1.transfer(user2Account, tenCoins, {from: creatorAccount})

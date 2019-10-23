@@ -1218,9 +1218,13 @@ contract SVCExchange is Ownable {
 
   /**
   * Constructor
+  * @param _market_id id of the market
+  * @param _market name of the market e.g. football
   * @param coinAddress address is the address of the deployed contract for SVC token
   */
-  constructor(address coinAddress) public {
+  constructor(uint32 _market_id, string _market, address coinAddress) public {
+    market_id = _market_id;
+    market = _market;
     svc = SportValueCoin(coinAddress);
   }
 
