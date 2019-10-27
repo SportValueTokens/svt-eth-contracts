@@ -21,7 +21,7 @@ contract SVCExchange is Ownable {
   uint public constant DECIMALS = 4;
 
   SportValueCoin public svc;
-  // TODO virtual SVC accounts for each pair
+
   mapping (address => uint) private svcBalanceOf;
 
   event TokenPurchase(
