@@ -4,12 +4,14 @@ import "../tokens/SportValueCoin.sol";
 import "../tokens/AssetToken.sol";
 import "../tokens/Ownable.sol";
 import "../tokens/ERC20.sol";
+import "../tokens/SafeMath.sol";
 
 /**
 * Fixed price SVC - ERC20 token swap
 *
 */
 contract FixedPriceSVCTokenSwap is Ownable {
+  using SafeMath for uint;
   string public version = '0.1';
 
   // number of decimals we keep for price
@@ -20,7 +22,11 @@ contract FixedPriceSVCTokenSwap is Ownable {
 
   ERC20 public asset;
   SportValueCoin public coin;
+  // ERC20 token symbol
   string public symbol;
+
+  // how much can a wallet withdraw
+  mapping (address => uint) private quota;
 
   event TokenPurchase(
     address indexed purchaser,
@@ -50,6 +56,7 @@ contract FixedPriceSVCTokenSwap is Ownable {
   * The caller wants to buy back the ERC20 coin using SVC coins. To do so, he needs to:
   * 1. authorise then contract to transfer enough SVC from him
   * 2. call buy by providing enough gas and specifying the number of assets (18 decimals) he wishes to buy
+  * @param nbAssets how man ERC20 tokens
   */
   function buy(uint nbAssets) public {
     // how many SVC buyer needs to buy this asset
@@ -57,6 +64,7 @@ contract FixedPriceSVCTokenSwap is Ownable {
 
     // check how many assets the contract owns
     uint availableAssetBalance = asset.balanceOf(this);
+    require(nbAssets <= quota[msg.sender], "Out of quote");
     require(nbAssets <= availableAssetBalance, "Not enough assets in stock");
 
     // get paid in SVC
@@ -64,6 +72,9 @@ contract FixedPriceSVCTokenSwap is Ownable {
 
     // sending the tokens to the buyer
     require(asset.transfer(msg.sender, nbAssets), "Failed asset transfer from liquidity contract to buyer");
+
+    // reduce quota
+    quota[msg.sender].sub(nbAssets);
 
     emit TokenPurchase(msg.sender, nbAssets, price, nbCoins);
   }
@@ -87,6 +98,9 @@ contract FixedPriceSVCTokenSwap is Ownable {
     // transfer SVC
     require(coin.transfer(msg.sender, nbCoins), "Failed SVC transfer from liquidity contract to seller");
 
+    // increase quota
+    quota[msg.sender].add(nbAssets);
+
     emit TokenSale(msg.sender, nbAssets, price, nbCoins);
   }
 
@@ -105,8 +119,18 @@ contract FixedPriceSVCTokenSwap is Ownable {
     require(asset.transfer(msg.sender, nbAssets), "Failed asset transfer to caller from contract");
   }
 
+  /**
+  * Owner can update price
+  */
   function setPrice(uint _price) public onlyOwner {
     price = _price;
+  }
+
+  /**
+  * Owner can update quotas on demand
+  */
+  function setQuota(address wallet, uint _quota) public onlyOwner {
+    quota[wallet] = _quota;
   }
 
 }

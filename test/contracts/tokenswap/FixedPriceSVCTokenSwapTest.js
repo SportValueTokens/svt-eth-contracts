@@ -16,10 +16,12 @@ contract('FixedPriceSVCTokenSwap', function (accounts) {
   const creatorAccount = accounts[0]
   const user1Account = accounts[1]
   const user2Account = accounts[2]
+  const user3Account = accounts[3]
   const DECIMALS = 18
   const oneCoin = new BN(1).mul(new BN(10).pow(new BN(DECIMALS)))
   const twoCoins = new BN(2).mul(new BN(10).pow(new BN(DECIMALS)))
   const tenCoins = new BN(10).mul(new BN(10).pow(new BN(DECIMALS)))
+  const twentyCoins = new BN(20).mul(new BN(10).pow(new BN(DECIMALS)))
   const hundredCoins = new BN(100).mul(new BN(10).pow(new BN(DECIMALS)))
   const thousandCoins = new BN(1000).mul(new BN(10).pow(new BN(DECIMALS)))
 
@@ -27,18 +29,23 @@ contract('FixedPriceSVCTokenSwap', function (accounts) {
     svc = await SVCoinContract.new({from: creatorAccount})
     erc20 = await MintableToken.new()
     await erc20.mint(creatorAccount, thousandCoins)
-    // give each user 10 SVC
+    // give each user 20 SVC
     await svc.transfer(user1Account, tenCoins, {from: creatorAccount})
     await svc.transfer(user2Account, tenCoins, {from: creatorAccount})
+    await svc.transfer(user3Account, tenCoins, {from: creatorAccount})
 
     exchangeContract = await FixedPriceSVCTokenSwap.new(svc.address, erc20.address, 'TST', {from: creatorAccount})
 
-    // transfer assets to user2
+    // transfer assets to user2 and user3
     erc20.transfer(user2Account, twoCoins, {from: creatorAccount})
+    erc20.transfer(user3Account, twoCoins, {from: creatorAccount})
 
     // transfer SVC and asset to exchange
-    await svc.transfer(exchangeContract.address, tenCoins, {from: creatorAccount})
-    await erc20.transfer(exchangeContract.address, tenCoins, {from: creatorAccount})
+    await svc.transfer(exchangeContract.address, hundredCoins, {from: creatorAccount})
+    await erc20.transfer(exchangeContract.address, hundredCoins, {from: creatorAccount})
+    // set quota for users
+    await exchangeContract.setQuota(user1Account, twentyCoins, {from: creatorAccount})
+    await exchangeContract.setQuota(user2Account, twentyCoins, {from: creatorAccount})
     let exchangeSVCBalance = await svc.balanceOf.call(exchangeContract.address)
     console.log('FixedPriceSVCTokenSwap initial SVC balance', helpers.toRealTokenNumber(exchangeSVCBalance).toString())
   }
@@ -60,14 +67,20 @@ contract('FixedPriceSVCTokenSwap', function (accounts) {
       expect(assetBalance).to.eq.BN(oneCoin)
     })
 
-    it('should fail if buyer has no money', async () => {
-      const user3Account = accounts[3]
+    it('should fail if buyer has no quota', async () => {
       // user3 approves the contract to spend SVC
       await svc.approve(exchangeContract.address, oneCoin, {from: user3Account})
       await expectRevert(exchangeContract.buy(oneCoin, {from: user3Account}))
     })
 
+    it('should fail if buyer has no money', async () => {
+      // user2 approves the contract to spend SVC
+      await svc.approve(exchangeContract.address, twentyCoins, {from: user2Account})
+      await expectRevert(exchangeContract.buy(twentyCoins, {from: user2Account}))
+    })
+
     it('should fail if contract has no stock', async () => {
+      await exchangeContract.setQuota(user1Account, thousandCoins, {from: creatorAccount})
       await svc.approve(exchangeContract.address, thousandCoins, {from: user1Account})
       await expectRevert(exchangeContract.buy(hundredCoins, {from: user1Account}))
     })
@@ -75,8 +88,6 @@ contract('FixedPriceSVCTokenSwap', function (accounts) {
     it('should fail if buyer has not allowed transfers', async () => {
       await expectRevert(exchangeContract.buy(oneCoin, {from: user1Account}))
     })
-
-    // should not be able to have 0 assets
   })
 
   describe('Asset sale', () => {
@@ -98,11 +109,25 @@ contract('FixedPriceSVCTokenSwap', function (accounts) {
       expect(assetBalance).to.eq.BN(oneCoin)
     })
 
+    it('a user should be able to sell an asset for SVC without having quota', async () => {
+      // user2 needs to allow the exchange contract to spend his tokens
+      await erc20.approve(exchangeContract.address, twoCoins, {from: user3Account})
+
+      // then sell 1 token
+      await exchangeContract.sell(oneCoin, {from: user3Account})
+
+      // we expect 1 token to be sold for 1 SVC
+      let coinBalance = await svc.balanceOf.call(user3Account)
+      expect(coinBalance).to.eq.BN(new BN(1100).mul(new BN(10).pow(new BN(DECIMALS - 2))))
+      let assetBalance = await erc20.balanceOf.call(user3Account)
+      expect(assetBalance).to.eq.BN(oneCoin)
+    })
+
     it('should fail if seller has no tokens', async () => {
-      const user3Account = accounts[3]
+      const userAccount = accounts[4]
       // user3 approves the contract to spend player tokens
-      await erc20.approve(exchangeContract.address, oneCoin, {from: user3Account})
-      await expectRevert(exchangeContract.sell(oneCoin, {from: user3Account}))
+      await erc20.approve(exchangeContract.address, oneCoin, {from: userAccount})
+      await expectRevert(exchangeContract.sell(oneCoin, {from: userAccount}))
     })
 
     it('should fail if contract has no stock', async () => {
@@ -114,8 +139,6 @@ contract('FixedPriceSVCTokenSwap', function (accounts) {
     it('should fail if seller has not allowed transfers', async () => {
       await expectRevert(exchangeContract.sell(oneCoin, {from: user2Account}))
     })
-
-    // should not be able to have 0 assets
   })
 
   describe('removeAssets', () => {
