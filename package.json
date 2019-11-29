@@ -1,6 +1,6 @@
 {
-  "name": "sportvaluetoken-contracts",
-  "version": "0.1.0",
+  "name": "svt-eth-contracts",
+  "version": "0.1.2",
   "description": "Ethereum Smart Contracts for Sport Value Tokens",
   "main": "",
   "directories": {

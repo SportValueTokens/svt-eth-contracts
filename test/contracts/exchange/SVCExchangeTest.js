@@ -1,6 +1,6 @@
 const SVC = artifacts.require('./tokens/SportValueCoin.sol')
 const PlayerTokenContract = artifacts.require('./tokens/PlayerToken.sol')
-const SVCExchange = artifacts.require('tokenswap/SVCExchange.sol')
+const SVCExchange = artifacts.require('exchange/SVCExchange.sol')
 const chai = require('chai')
 const expect = chai.expect
 const BN = require('bn.js')
