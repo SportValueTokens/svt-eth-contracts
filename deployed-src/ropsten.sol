@@ -859,345 +859,16 @@ contract AssetToken is MintableToken, BurnableToken {
     _mint(msg.sender, initialBalance);
   }
 
-}
-
-// File: contracts/payout/Payout.sol
-
-pragma solidity 0.4.24;
-
-
-
-
-/**
-* contract from which traders collect payouts.
-* owns the payout pool for a market in SVC
-*/
-contract Payout is Ownable {
-
-  // meta data
-  string public constant version = '0.1.2';
-  uint32 public market_id;
-  string public market;
-
-  SportValueCoin svc;
-
-  event PayoutSent (
-    address indexed holder,
-    uint32 assedId,
-    uint payout
-  );
-
-  // last wins
-  struct Win {
-    uint amount;
-    AssetToken token;
-  }
-
-  Win[] public wins;
-  mapping(address => uint) winsMap;
-  mapping(address => bool) isPaid;
-
-
   /**
-  * @param _market_id id of the market
-  * @param _market market name
-  * @param _svcAddress SVC coin contract address
+  * Allow owner to update the name
+  * @param _name new name
   */
-  constructor(uint32 _market_id, string _market, address _svcAddress) public {
-    market_id = _market_id;
-    market = _market;
-    svc = SportValueCoin(_svcAddress);
-  }
-
-  function calcPayoutPerToken(AssetToken token) public view returns (uint){
-    return (token.balanceOf(msg.sender) * winsMap[token]) / token.totalSupply();
-  }
-
-  function getPayment(AssetToken[] memory tokens) public {
-    require(!isPaid[msg.sender],"already paid");
-    uint amount = 0;
-    for (uint32 i = 0; i < tokens.length; i++) {
-      AssetToken token = tokens[i];
-      if (token.balanceOf(msg.sender) > 0) {
-        uint win = winsMap[token];
-        if (win != 0) {
-          amount += calcPayoutPerToken(token);
-        }
-      }
-    }
-    svc.transfer(msg.sender, amount);
-    isPaid[msg.sender] = true;
-    emit PayoutSent(msg.sender, token.id(), amount);
-  }
-
-  function updateWinners(address[] memory winningTokens, uint[] winningAmounts) public onlyOwner {
-    // delete old data
-    for (uint32 i = 0; i < wins.length; i++) {
-      delete winsMap[i];
-      delete isPaid[i];
-    }
-    delete wins;
-
-    // record new data
-    for (i = 0; i < winningTokens.length; i++) {
-      AssetToken token = AssetToken(winningTokens[i]);
-      Win memory win = Win(winningAmounts[i], token);
-      wins.push(win);
-      winsMap[token] = win.amount;
-    }
+  function setName(string _name) public onlyOwner {
+    name = _name;
   }
 }
 
-// File: contracts/tokens/PlayerToken.sol
-
-pragma solidity 0.4.24;
-
-
-/**
-This token represents a tradeable player
-*/
-contract PlayerToken is AssetToken {
-  string public constant version = '0.1';
-
-  /**
-  * Constructor for a new Player Token.
-  * @param initialBalance balance (18 decimals)
-  * @param _id number
-  * @param _name name of footballer
-  * @param _symbol unique token symbol
-  * @param _market sport name (eg football)
-  */
-  constructor(uint initialBalance, uint32 _id, string _symbol, string _name, string _market)
-  AssetToken(initialBalance, _id, _symbol, _name, _market) public {}
-}
-
-// File: contracts/tokens/PlayerTokenFactory.sol
-
-pragma solidity 0.4.24;
-
-
-
-/**
-* This contract implements a Factory pattern to create player tokens for a specific market / sport
-*/
-contract PlayerTokenFactory is Ownable {
-  // numerical id of the market
-  uint32 public market_id;
-  // market name eg football
-  string public market;
-  string public version = "0.1";
-
-  // counter used to assign token ids
-  uint32 public lastId = 0;
-  // list of token addresses that have been created
-  address[] public tokenList;
-  // token addresses indexed by their id
-  mapping(uint32 => address) public tokenAddr;
-
-  event AssetCreated (
-    address indexed creator,
-    address indexed addr,
-    string symbol,
-    uint balance
-  );
-
-  /**
-  * @param _market_id id of the market
-  * @param _market name of the market
-  */
-  constructor(uint32 _market_id, string _market) public {
-    market_id = _market_id;
-    market = _market;
-  }
-
-  /**
-  * This is needed because there is no way to return an array in a solidity method.
-  * You have to call tokenList(i) to get an element of the array
-  */
-  function getTokenCount() public view returns(uint) {
-    return tokenList.length;
-  }
-
-  /**
-  * Creates a new PlayerToken and stores the address in tokenList
-  */
-  function createToken(uint initialBalance, string _name, string _symbol) public onlyOwner {
-    lastId++;
-    PlayerToken newToken = new PlayerToken(0, lastId, _symbol, _name, market);
-    newToken.mint(owner, initialBalance);
-    newToken.transferOwnership(owner);
-    tokenList.push(newToken);
-    tokenAddr[lastId] = newToken;
-    emit AssetCreated(msg.sender, newToken, _symbol, initialBalance);
-  }
-}
-
-// File: contracts/tokens/TeamToken.sol
-
-pragma solidity 0.4.24;
-
-
-
-/**
-This token represents a tradeable team, composed of players
-*/
-contract TeamToken is AssetToken {
-  string public constant version = '0.1';
-
-  // list of players composing the team with associated contracts
-  mapping(uint => PlayerToken) public players;
-
-  /**
-  * Constructor for a new Team Token.
-  * @param initialBalance balance (18 decimals)
-  * @param _id number
-  * @param _name name of footballer
-  * @param _symbol token symbol
-  * @param _market market name (eg football)
-  */
-  constructor(uint initialBalance, uint32 _id, string _symbol, string _name, string _market)
-  AssetToken(initialBalance, _id, _symbol, _name, _market) public {}
-}
-
-// File: contracts/tokenswap/FixedPriceSVCTokenSwap.sol
-
-pragma solidity 0.4.24;
-
-
-
-
-
-
-/**
-* Fixed price SVC - ERC20 token swap
-*
-*/
-contract FixedPriceSVCTokenSwap is Ownable {
-  using SafeMath for uint;
-  string public version = '0.1';
-
-  // number of decimals we keep for price
-  uint public constant DECIMALS = 4;
-
-  // SVC per token divided times DECIMALS
-  uint public price = 10000;
-
-  ERC20 public asset;
-  SportValueCoin public coin;
-  // ERC20 token symbol
-  string public symbol;
-
-  // how much can a wallet withdraw
-  mapping (address => uint) private quota;
-
-  event TokenPurchase(
-    address indexed purchaser,
-    uint number,
-    uint price,
-    uint value
-  );
-
-  event TokenSale(
-    address indexed seller,
-    uint number,
-    uint price,
-    uint value
-  );
-
-  /**
-  * @param coinAddress address is the address of the deployed contract for SVC token
-  * @param assetAddress address is the address of the ERC20 contract of the stable coin asset
-  */
-  constructor(address coinAddress, address assetAddress, string _symbol) public {
-    coin = SportValueCoin(coinAddress);
-    asset = ERC20(assetAddress);
-    symbol = _symbol;
-  }
-
-  /**
-  * The caller wants to buy back the ERC20 coin using SVC coins. To do so, he needs to:
-  * 1. authorise then contract to transfer enough SVC from him
-  * 2. call buy by providing enough gas and specifying the number of assets (18 decimals) he wishes to buy
-  * @param nbAssets how man ERC20 tokens
-  */
-  function buy(uint nbAssets) public {
-    // how many SVC buyer needs to buy this asset
-    uint nbCoins = price * nbAssets / 10 ** DECIMALS;
-
-    // check how many assets the contract owns
-    uint availableAssetBalance = asset.balanceOf(this);
-    require(nbAssets <= quota[msg.sender], "Out of quote");
-    require(nbAssets <= availableAssetBalance, "Not enough assets in stock");
-
-    // get paid in SVC
-    require(coin.transferFrom(msg.sender, this, nbCoins), "Failed coin transfer from buyer to liquidity contract");
-
-    // sending the tokens to the buyer
-    require(asset.transfer(msg.sender, nbAssets), "Failed asset transfer from liquidity contract to buyer");
-
-    // reduce quota
-    quota[msg.sender].sub(nbAssets);
-
-    emit TokenPurchase(msg.sender, nbAssets, price, nbCoins);
-  }
-
-  /**
-  * The caller wants to sell assets for SVC coins. To do so, he needs to:
-  * 1. authorise SVCTokenSwap contract to transfer enough AssetToken from him
-  * 2. call sell by providing enough gas and specifying the number of assets (18 decimals) he wishes to sell
-  */
-  function sell(uint nbAssets) public {
-    // how many SVC buyer gets for that asset
-    uint nbCoins = price * nbAssets / 10 ** DECIMALS;
-
-    // check how many SVC the contract owns
-    uint availableSVCBalance = coin.balanceOf(this);
-    require(nbCoins <= availableSVCBalance, "Not enough SVC in stock");
-
-    // transfer assets to the contract
-    require(asset.transferFrom(msg.sender, this, nbAssets), "Failed asset transfer from seller to liquidity contract");
-
-    // transfer SVC
-    require(coin.transfer(msg.sender, nbCoins), "Failed SVC transfer from liquidity contract to seller");
-
-    // increase quota
-    quota[msg.sender].add(nbAssets);
-
-    emit TokenSale(msg.sender, nbAssets, price, nbCoins);
-  }
-
-  function removeSVC(uint nbCoins) public onlyOwner {
-    uint coinBalance = coin.balanceOf(this);
-    require(nbCoins <= coinBalance, "Not enough SVC owned by the contract");
-
-    // transfer SVC to the sender
-    require(coin.transfer(msg.sender, nbCoins), "Failed SVC transfer to caller from contract");
-  }
-
-  function removeAssets(uint nbAssets) public onlyOwner {
-    uint assetBalance = asset.balanceOf(this);
-    require(nbAssets <= assetBalance, "Not enough assets owned by the contract");
-    // transfer assets to the sender
-    require(asset.transfer(msg.sender, nbAssets), "Failed asset transfer to caller from contract");
-  }
-
-  /**
-  * Owner can update price
-  */
-  function setPrice(uint _price) public onlyOwner {
-    price = _price;
-  }
-
-  /**
-  * Owner can update quotas on demand
-  */
-  function setQuota(address wallet, uint _quota) public onlyOwner {
-    quota[wallet] = _quota;
-  }
-
-}
-
-// File: contracts/tokenswap/SVCExchange.sol
+// File: contracts/exchange/SVCExchange.sol
 
 pragma solidity 0.4.24;
 
@@ -1394,7 +1065,7 @@ contract SVCExchange is Ownable {
 
 }
 
-// File: contracts/tokenswap/SVCTokenSwap.sol
+// File: contracts/exchange/StableCoinToSVCExchange.sol
 
 pragma solidity 0.4.24;
 
@@ -1402,21 +1073,31 @@ pragma solidity 0.4.24;
 
 
 
+
 /**
-* This is a market making / liquidity contract inspired by Uniswap protocol but simplified.
-* The idea is to keep stock of assets and currency and calculate price based on the rations of asset/currency
+* Fixed price SVC - ERC20 token exchange contract. Keeps quotase to prevent abuse.
+* By default users can only remove the same amount of tokens that they have put in plus 20.
+* This can be overridden on demand by owners.
 */
-contract SVCTokenSwap is Ownable {
-  string public version = '0.1';
+contract StableCoinToSVCExchange is Ownable {
+  using SafeMath for uint;
+  string public version = '0.2';
 
   // number of decimals we keep for price
   uint public constant DECIMALS = 4;
 
-  AssetToken public asset;
-  SportValueCoin public coin;
+  // SVC per token divided times DECIMALS
+  uint public price = 10000;
+
+  ERC20 public stableCoin;
+  SportValueCoin public svc;
+  // ERC20 token symbol
   string public symbol;
 
-  event TokenPurchase(
+  // how much can a wallet withdraw
+  mapping (address => uint) public quota;
+
+  event TokenPurchase (
     address indexed purchaser,
     uint number,
     uint price,
@@ -1431,141 +1112,247 @@ contract SVCTokenSwap is Ownable {
   );
 
   /**
-  * @param coinAddress address is the address of the deployed contract for SVC token
-  * @param assetAddress address is the address of the ERC20 contract of the tradeable asset
+  * @param svcAddress address is the address of the deployed contract for SVC token
+  * @param tokenAddress address is the address of the ERC20 contract of the stable coin asset
+  * @param _symbol of the stable coin
   */
-  constructor(address coinAddress, address assetAddress) public {
-    coin = SportValueCoin(coinAddress);
-    asset = AssetToken(assetAddress);
-    symbol = asset.symbol();
+  constructor(address svcAddress, address tokenAddress, string _symbol) public {
+    svc = SportValueCoin(svcAddress);
+    stableCoin = ERC20(tokenAddress);
+    symbol = _symbol;
   }
 
   /**
-  * Calculates the price of the asset in SVC coins
-  */
-  function getAssetPrice() public view returns (uint) {
-    uint assetBalance = asset.balanceOf(this);
-    uint coinBalance = coin.balanceOf(this);
-    uint price = coinBalance * 10 ** DECIMALS / assetBalance;
-    return price;
-  }
-
-  /**
-  * The caller wants to buy assets using SVC coins. To do so, he needs to:
-  * 1. authorise SVCTokenSwap contract to transfer enough SVC from him
+  * The caller wants to buy back the ERC20 coin using SVC coins. To do so, he needs to:
+  * 1. authorise then contract to transfer enough SVC from him
   * 2. call buy by providing enough gas and specifying the number of assets (18 decimals) he wishes to buy
+  * @param nbTokens how many ERC20 tokens
   */
-  function buy(uint nbAssets) public {
+  function buy(uint nbTokens) public {
     // how many SVC buyer needs to buy this asset
-    uint price = getAssetPrice();
-    uint nbCoins = price * nbAssets / 10 ** DECIMALS;
+    uint nbCoins = price * nbTokens / 10 ** DECIMALS;
 
     // check how many assets the contract owns
-    uint availableAssetBalance = asset.balanceOf(this);
-    require(nbAssets <= availableAssetBalance, "Not enough assets in stock");
+    uint availableAssetBalance = stableCoin.balanceOf(this);
+    require(nbTokens <= quota[msg.sender], "No SVC quota");
+    require(nbTokens <= availableAssetBalance, "Not enough tokens in stock");
 
     // get paid in SVC
-    require(coin.transferFrom(msg.sender, this, nbCoins), "Failed coin transfer from buyer to liquidity contract");
+    require(svc.transferFrom(msg.sender, this, nbCoins), "Failed coin transfer from buyer to exchange contract");
 
     // sending the tokens to the buyer
-    require(asset.transfer(msg.sender, nbAssets), "Failed asset transfer from liquidity contract to buyer");
+    require(stableCoin.transfer(msg.sender, nbTokens), "Failed asset transfer from liquidity contract to buyer");
 
-    emit TokenPurchase(msg.sender, nbAssets, price, nbCoins);
+    // reduce quota
+    quota[msg.sender] = quota[msg.sender].sub(nbTokens);
+
+    emit TokenPurchase(msg.sender, nbTokens, price, nbCoins);
   }
 
   /**
   * The caller wants to sell assets for SVC coins. To do so, he needs to:
   * 1. authorise SVCTokenSwap contract to transfer enough AssetToken from him
   * 2. call sell by providing enough gas and specifying the number of assets (18 decimals) he wishes to sell
+  * @param nbTokens how many ERC20 tokens
   */
-  function sell(uint nbAssets) public {
+  function sell(uint nbTokens) public {
     // how many SVC buyer gets for that asset
-    uint price = getAssetPrice();
-    uint nbCoins = price * nbAssets / 10 ** DECIMALS;
+    uint nbCoins = price * nbTokens / 10 ** DECIMALS;
 
     // check how many SVC the contract owns
-    uint availableSVCBalance = coin.balanceOf(this);
+    uint availableSVCBalance = svc.balanceOf(this);
     require(nbCoins <= availableSVCBalance, "Not enough SVC in stock");
 
     // transfer assets to the contract
-    require(asset.transferFrom(msg.sender, this, nbAssets), "Failed asset transfer from seller to liquidity contract");
+    require(stableCoin.transferFrom(msg.sender, this, nbTokens), "Failed asset transfer from seller to liquidity contract");
 
     // transfer SVC
-    require(coin.transfer(msg.sender, nbCoins), "Failed SVC transfer from liquidity contract to seller");
+    require(svc.transfer(msg.sender, nbCoins), "Failed SVC transfer from liquidity contract to seller");
 
-    emit TokenSale(msg.sender, nbAssets, price, nbCoins);
+    // increase quota
+    quota[msg.sender] = quota[msg.sender].add(nbTokens);
+
+    emit TokenSale(msg.sender, nbTokens, price, nbCoins);
   }
 
-  /**
-  * Add liquidity by keep existing ratio of assets because price depends on the ration. This should not modify price.
-  * The caller need to have authorised the contract to transfer SVC and Assets
-  */
-  function addLiquidity(uint nbCoins) public onlyOwner {
-    uint assetBalance = asset.balanceOf(this);
-    uint coinBalance = coin.balanceOf(this);
-
-    uint nbAssetsToAdd = assetBalance * nbCoins / coinBalance;
-
-    // transfer assets to the contract
-    require(asset.transferFrom(msg.sender, this, nbAssetsToAdd), "Failed asset transfer from caller to contract");
-
-    // transfer SVC to the contract
-    require(coin.transferFrom(msg.sender, this, nbCoins), "Failed SVC transfer from caller to contract");
-  }
-
-  /**
-  * The owner may remove liquidity by getting back his SVC and AssetToken
-  */
-  function removeLiquidity(uint nbCoins) public onlyOwner {
-    uint assetBalance = asset.balanceOf(this);
-    uint coinBalance = coin.balanceOf(this);
+  function removeSVC(uint nbCoins) public onlyOwner {
+    uint coinBalance = svc.balanceOf(this);
     require(nbCoins <= coinBalance, "Not enough SVC owned by the contract");
-    uint nbAssetsToRemove = assetBalance * nbCoins / coinBalance;
-    require(nbAssetsToRemove <= assetBalance, "Not enough assets owned by the contract");
-
-    // transfer assets to the sender
-    require(asset.transfer(msg.sender, nbAssetsToRemove), "Failed asset transfer to caller from contract");
 
     // transfer SVC to the sender
-    require(coin.transfer(msg.sender, nbCoins), "Failed SVC transfer to caller from contract");
+    require(svc.transfer(msg.sender, nbCoins), "Failed SVC transfer to caller from contract");
   }
 
+  function removeTokens(uint nbTokens) public onlyOwner {
+    uint assetBalance = stableCoin.balanceOf(this);
+    require(nbTokens <= assetBalance, "Not enough tokens owned by the contract");
+    // transfer assets to the sender
+    require(stableCoin.transfer(msg.sender, nbTokens), "Failed token transfer to caller from contract");
+  }
+
+  /**
+  * Owner can update price
+  */
+  function setPrice(uint _price) public onlyOwner {
+    price = _price;
+  }
+
+  /**
+  * Owner can update quotas on demand
+  */
+  function setQuota(address wallet, uint _quota) public onlyOwner {
+    quota[wallet] = _quota;
+  }
 
 }
 
-// File: contracts/tokenswap/SVCTokenSwapFactory.sol
+// File: contracts/payout/Payout.sol
+
+pragma solidity 0.4.24;
+
+
+
+
+/**
+* contract from which traders collect payouts.
+* owns the payout pool for a market in SVC
+*/
+contract Payout is Ownable {
+
+  // meta data
+  string public constant version = '0.1.2';
+  uint32 public market_id;
+  string public market;
+
+  SportValueCoin svc;
+
+  event PayoutSent (
+    address indexed holder,
+    uint32 assedId,
+    uint payout
+  );
+
+  // last wins
+  struct Win {
+    uint amount;
+    AssetToken token;
+  }
+
+  Win[] public wins;
+  mapping(address => uint) winsMap;
+  mapping(address => bool) isPaid;
+
+
+  /**
+  * @param _market_id id of the market
+  * @param _market market name
+  * @param _svcAddress SVC coin contract address
+  */
+  constructor(uint32 _market_id, string _market, address _svcAddress) public {
+    market_id = _market_id;
+    market = _market;
+    svc = SportValueCoin(_svcAddress);
+  }
+
+  function calcPayoutPerToken(AssetToken token) public view returns (uint){
+    return (token.balanceOf(msg.sender) * winsMap[token]) / token.totalSupply();
+  }
+
+  function getPayment(AssetToken[] memory tokens) public {
+    require(!isPaid[msg.sender],"already paid");
+    uint amount = 0;
+    for (uint32 i = 0; i < tokens.length; i++) {
+      AssetToken token = tokens[i];
+      if (token.balanceOf(msg.sender) > 0) {
+        uint win = winsMap[token];
+        if (win != 0) {
+          amount += calcPayoutPerToken(token);
+        }
+      }
+    }
+    svc.transfer(msg.sender, amount);
+    isPaid[msg.sender] = true;
+    emit PayoutSent(msg.sender, token.id(), amount);
+  }
+
+  function updateWinners(address[] memory winningTokens, uint[] winningAmounts) public onlyOwner {
+    // delete old data
+    for (uint32 i = 0; i < wins.length; i++) {
+      delete winsMap[i];
+      delete isPaid[i];
+    }
+    delete wins;
+
+    // record new data
+    for (i = 0; i < winningTokens.length; i++) {
+      AssetToken token = AssetToken(winningTokens[i]);
+      Win memory win = Win(winningAmounts[i], token);
+      wins.push(win);
+      winsMap[token] = win.amount;
+    }
+  }
+}
+
+// File: contracts/tokens/PlayerToken.sol
+
+pragma solidity 0.4.24;
+
+
+/**
+This token represents a tradeable player
+*/
+contract PlayerToken is AssetToken {
+  string public constant version = '0.2';
+
+  /**
+  * Constructor for a new Player Token.
+  * @param initialBalance balance (18 decimals)
+  * @param _id number
+  * @param _name name of footballer
+  * @param _symbol unique token symbol
+  * @param _market sport name (eg football)
+  */
+  constructor(uint initialBalance, uint32 _id, string _symbol, string _name, string _market)
+  AssetToken(initialBalance, _id, _symbol, _name, _market) public {}
+}
+
+// File: contracts/tokens/PlayerTokenFactory.sol
 
 pragma solidity 0.4.24;
 
 
 
 /**
-* A contract factory to create new SVCTokenSwap instances for each token instance
+* This contract implements a Factory pattern to create player tokens for a specific market / sport
 */
-contract SVCTokenSwapFactory is Ownable {
+contract PlayerTokenFactory is Ownable {
+  // numerical id of the market
   uint32 public market_id;
+  // market name eg football
   string public market;
   string public version = "0.1";
-  address public coinAddress;
-  // token address => TokenSwap contracts
-  mapping(address => SVCTokenSwap) public tokenSwaps;
-  address[] public tokenList;
 
-  event TokenSwapCreated (
+  // counter used to assign token ids
+  uint32 public lastId = 0;
+  // list of token addresses that have been created
+  address[] public tokenList;
+  // token addresses indexed by their id
+  mapping(uint32 => address) public tokenAddr;
+
+  event AssetCreated (
     address indexed creator,
     address indexed addr,
-    address indexed assetAddr
+    string symbol,
+    uint balance
   );
 
   /**
-  * @param _coinAddress address of SVC contract
   * @param _market_id id of the market
-  * @param _market market name
+  * @param _market name of the market
   */
-  constructor(address _coinAddress, uint32 _market_id, string _market) public {
-    coinAddress = _coinAddress;
-    market = _market;
+  constructor(uint32 _market_id, string _market) public {
     market_id = _market_id;
+    market = _market;
   }
 
   /**
@@ -1577,16 +1364,42 @@ contract SVCTokenSwapFactory is Ownable {
   }
 
   /**
-  * Create a new SVCTokenSwap contract for the give asset ERC20 token
-  * @param asset the address of the ERC20 contract of the asset
+  * Creates a new PlayerToken and stores the address in tokenList
   */
-  function createTokenSwap(address asset) public onlyOwner returns (address) {
-    require(asset != address(0));
-    SVCTokenSwap tokenSwap = new SVCTokenSwap(coinAddress, asset);
-    tokenSwap.transferOwnership(owner);
-    tokenSwaps[asset] = tokenSwap;
-    tokenList.push(asset);
-    emit TokenSwapCreated(msg.sender, tokenSwap, asset);
-    return tokenSwap;
+  function createToken(uint initialBalance, string _name, string _symbol) public onlyOwner {
+    lastId++;
+    PlayerToken newToken = new PlayerToken(0, lastId, _symbol, _name, market);
+    newToken.mint(owner, initialBalance);
+    newToken.transferOwnership(owner);
+    tokenList.push(newToken);
+    tokenAddr[lastId] = newToken;
+    emit AssetCreated(msg.sender, newToken, _symbol, initialBalance);
   }
+}
+
+// File: contracts/tokens/TeamToken.sol
+
+pragma solidity 0.4.24;
+
+
+
+/**
+This token represents a tradeable team, composed of players
+*/
+contract TeamToken is AssetToken {
+  string public constant version = '0.2';
+
+  // list of players composing the team with associated contracts
+  mapping(uint => PlayerToken) public players;
+
+  /**
+  * Constructor for a new Team Token.
+  * @param initialBalance balance (18 decimals)
+  * @param _id number
+  * @param _name name of footballer
+  * @param _symbol token symbol
+  * @param _market market name (eg football)
+  */
+  constructor(uint initialBalance, uint32 _id, string _symbol, string _name, string _market)
+  AssetToken(initialBalance, _id, _symbol, _name, _market) public {}
 }

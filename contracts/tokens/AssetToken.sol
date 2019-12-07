@@ -35,4 +35,11 @@ contract AssetToken is MintableToken, BurnableToken {
     _mint(msg.sender, initialBalance);
   }
 
+  /**
+  * Allow owner to update the name
+  * @param _name new name
+  */
+  function setName(string _name) public onlyOwner {
+    name = _name;
+  }
 }

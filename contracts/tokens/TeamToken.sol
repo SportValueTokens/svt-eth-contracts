@@ -7,7 +7,7 @@ import "./PlayerToken.sol";
 This token represents a tradeable team, composed of players
 */
 contract TeamToken is AssetToken {
-  string public constant version = '0.1';
+  string public constant version = '0.2';
 
   // list of players composing the team with associated contracts
   mapping(uint => PlayerToken) public players;

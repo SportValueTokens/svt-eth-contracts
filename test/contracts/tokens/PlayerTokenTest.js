@@ -31,6 +31,22 @@ contract('PlayerToken', function (accounts) {
     })
   })
 
+  describe('Name change', () => {
+    beforeEach(init)
+
+    it('should change token name', async () => {
+      await tokenContract.setName('Lionel Messi Updated',{from: creatorAccount})
+      let name = await tokenContract.name.call()
+      expect(name).to.equal('Lionel Messi Updated')
+    })
+
+    it('only owner can change it', async () => {
+      await expectRevert(tokenContract.setName('Lionel Messi Updated',{from: userAccount}))
+      let name = await tokenContract.name.call()
+      expect(name).to.equal('Lionel Messi Token')
+    })
+  })
+
   describe('Normal Transfers', () => {
     beforeEach(init)
 

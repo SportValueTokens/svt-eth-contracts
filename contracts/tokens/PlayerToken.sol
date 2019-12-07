@@ -6,7 +6,7 @@ import "./AssetToken.sol";
 This token represents a tradeable player
 */
 contract PlayerToken is AssetToken {
-  string public constant version = '0.1';
+  string public constant version = '0.2';
 
   /**
   * Constructor for a new Player Token.
