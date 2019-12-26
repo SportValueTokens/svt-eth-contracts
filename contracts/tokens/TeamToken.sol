@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity 0.5.14;
 
 import "./AssetToken.sol";
 import "./PlayerToken.sol";
@@ -20,6 +20,6 @@ contract TeamToken is AssetToken {
   * @param _symbol token symbol
   * @param _market market name (eg football)
   */
-  constructor(uint initialBalance, uint32 _id, string _symbol, string _name, string _market)
+  constructor(uint initialBalance, uint32 _id, string memory _symbol, string memory _name, string memory _market)
   AssetToken(initialBalance, _id, _symbol, _name, _market) public {}
 }

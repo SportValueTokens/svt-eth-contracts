@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity 0.5.14;
 
 import "./Crowdsale.sol";
 import "../tokens/Ownable.sol";
@@ -10,8 +10,9 @@ import "../tokens/ERC20.sol";
 * Contract for the Exclusive crowd sale only
 */
 contract SVCExclusiveSaleETH is Crowdsale, Ownable {
-
   using SafeMath for uint;
+
+  string public constant version = '0.2';
 
   uint public constant ETH_CAP = 2000 * (10 ** 18);
 
@@ -27,7 +28,7 @@ contract SVCExclusiveSaleETH is Crowdsale, Ownable {
   * @param _wallet the address collection ETH
   * @param _token the address of the token contract
   */
-  constructor(uint256 _rate, address _wallet, SportValueCoin _token) public Crowdsale(_rate, _wallet, _token) {
+  constructor(uint256 _rate, address payable _wallet, address _token) public Crowdsale(_rate, _wallet, _token) {
 
   }
 
@@ -48,7 +49,7 @@ contract SVCExclusiveSaleETH is Crowdsale, Ownable {
   */
   function finalize() public onlyOwner {
     isOpen = false;
-    token.safeTransfer(owner, token.balanceOf(this));
+    token.safeTransfer(owner, token.balanceOf(address(this)));
   }
 
   function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal isSaleOpen {

@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity 0.5.14;
 
 import "../tokens/SportValueCoin.sol";
 import "../tokens/AssetToken.sol";
@@ -48,7 +48,7 @@ contract StableCoinToSVCExchange is Ownable {
   * @param tokenAddress address is the address of the ERC20 contract of the stable coin asset
   * @param _symbol of the stable coin
   */
-  constructor(address svcAddress, address tokenAddress, string _symbol) public {
+  constructor(address svcAddress, address tokenAddress, string memory _symbol) public {
     svc = SportValueCoin(svcAddress);
     stableCoin = ERC20(tokenAddress);
     symbol = _symbol;
@@ -65,12 +65,12 @@ contract StableCoinToSVCExchange is Ownable {
     uint nbCoins = price * nbTokens / 10 ** DECIMALS;
 
     // check how many assets the contract owns
-    uint availableAssetBalance = stableCoin.balanceOf(this);
+    uint availableAssetBalance = stableCoin.balanceOf(address(this));
     require(nbTokens <= quota[msg.sender], "No SVC quota");
     require(nbTokens <= availableAssetBalance, "Not enough tokens in stock");
 
     // get paid in SVC
-    require(svc.transferFrom(msg.sender, this, nbCoins), "Failed coin transfer from buyer to exchange contract");
+    require(svc.transferFrom(msg.sender, address(this), nbCoins), "Failed coin transfer from buyer to exchange contract");
 
     // sending the tokens to the buyer
     require(stableCoin.transfer(msg.sender, nbTokens), "Failed asset transfer from liquidity contract to buyer");
@@ -92,11 +92,11 @@ contract StableCoinToSVCExchange is Ownable {
     uint nbCoins = price * nbTokens / 10 ** DECIMALS;
 
     // check how many SVC the contract owns
-    uint availableSVCBalance = svc.balanceOf(this);
+    uint availableSVCBalance = svc.balanceOf(address(this));
     require(nbCoins <= availableSVCBalance, "Not enough SVC in stock");
 
     // transfer assets to the contract
-    require(stableCoin.transferFrom(msg.sender, this, nbTokens), "Failed asset transfer from seller to liquidity contract");
+    require(stableCoin.transferFrom(msg.sender, address(this), nbTokens), "Failed asset transfer from seller to liquidity contract");
 
     // transfer SVC
     require(svc.transfer(msg.sender, nbCoins), "Failed SVC transfer from liquidity contract to seller");
@@ -108,7 +108,7 @@ contract StableCoinToSVCExchange is Ownable {
   }
 
   function removeSVC(uint nbCoins) public onlyOwner {
-    uint coinBalance = svc.balanceOf(this);
+    uint coinBalance = svc.balanceOf(address(this));
     require(nbCoins <= coinBalance, "Not enough SVC owned by the contract");
 
     // transfer SVC to the sender
@@ -116,7 +116,7 @@ contract StableCoinToSVCExchange is Ownable {
   }
 
   function removeTokens(uint nbTokens) public onlyOwner {
-    uint assetBalance = stableCoin.balanceOf(this);
+    uint assetBalance = stableCoin.balanceOf(address(this));
     require(nbTokens <= assetBalance, "Not enough tokens owned by the contract");
     // transfer assets to the sender
     require(stableCoin.transfer(msg.sender, nbTokens), "Failed token transfer to caller from contract");

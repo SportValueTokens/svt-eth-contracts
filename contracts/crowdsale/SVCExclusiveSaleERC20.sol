@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity 0.5.14;
 
 import "./Crowdsale.sol";
 import "../tokens/Ownable.sol";
@@ -11,6 +11,7 @@ import "../tokens/SafeERC20.sol";
 * Contract for the Exclusive crowd sale only
 */
 contract SVCExclusiveSaleERC20 is Ownable {
+  string public constant version = '0.2';
   string public symbol;
   using SafeMath for uint256;
   using SafeERC20 for ERC20;
@@ -44,12 +45,12 @@ contract SVCExclusiveSaleERC20 is Ownable {
   * @param _token the address of the token contract
   * @param _svc the address of the svc token contract
   */
-  constructor(uint256 _rate, address _wallet, ERC20 _token, ERC20 _svc, string _symbol) public {
+  constructor(uint256 _rate, address _wallet, address _token, address _svc, string memory _symbol) public {
     require(_rate > 0, "rate is 0");
     rate = _rate;
     wallet = _wallet;
-    token = _token;
-    svc = _svc;
+    token = ERC20(_token);
+    svc = ERC20(_svc);
     symbol = _symbol;
   }
 
@@ -93,6 +94,6 @@ contract SVCExclusiveSaleERC20 is Ownable {
   */
   function finalize() public onlyOwner {
     isOpen = false;
-    svc.safeTransfer(owner, svc.balanceOf(this));
+    svc.safeTransfer(owner, svc.balanceOf(address(this)));
   }
 }

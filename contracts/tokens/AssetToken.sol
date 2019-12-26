@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity 0.5.14;
 
 import "./MintableToken.sol";
 import "./BurnableToken.sol";
@@ -27,7 +27,7 @@ contract AssetToken is MintableToken, BurnableToken {
   * @param _symbol unique token symbol
   * @param _market market name (eg football)
   */
-  constructor(uint initialBalance, uint32 _id, string _symbol, string _name, string _market) internal {
+  constructor(uint initialBalance, uint32 _id, string memory _symbol, string memory _name, string memory _market) internal {
     id = _id;
     symbol = _symbol;
     name = _name;
@@ -39,7 +39,7 @@ contract AssetToken is MintableToken, BurnableToken {
   * Allow owner to update the name
   * @param _name new name
   */
-  function setName(string _name) public onlyOwner {
+  function setName(string memory _name) public onlyOwner {
     name = _name;
   }
 }

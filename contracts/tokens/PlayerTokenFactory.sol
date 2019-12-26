@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity 0.5.14;
 
 import "./PlayerToken.sol";
 import "./Ownable.sol";
@@ -31,7 +31,7 @@ contract PlayerTokenFactory is Ownable {
   * @param _market_id id of the market
   * @param _market name of the market
   */
-  constructor(uint32 _market_id, string _market) public {
+  constructor(uint32 _market_id, string memory _market) public {
     market_id = _market_id;
     market = _market;
   }
@@ -47,13 +47,13 @@ contract PlayerTokenFactory is Ownable {
   /**
   * Creates a new PlayerToken and stores the address in tokenList
   */
-  function createToken(uint initialBalance, string _name, string _symbol) public onlyOwner {
+  function createToken(uint initialBalance, string memory _name, string memory _symbol) public onlyOwner {
     lastId++;
     PlayerToken newToken = new PlayerToken(0, lastId, _symbol, _name, market);
     newToken.mint(owner, initialBalance);
     newToken.transferOwnership(owner);
-    tokenList.push(newToken);
-    tokenAddr[lastId] = newToken;
-    emit AssetCreated(msg.sender, newToken, _symbol, initialBalance);
+    tokenList.push(address(newToken));
+    tokenAddr[lastId] = address(newToken);
+    emit AssetCreated(msg.sender, address(newToken), _symbol, initialBalance);
   }
 }
