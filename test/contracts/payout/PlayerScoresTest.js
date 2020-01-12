@@ -1,6 +1,6 @@
 const SVCoinContract = artifacts.require('./tokens/SportValueCoin.sol')
 const PlayerTokenContract = artifacts.require('./tokens/PlayerToken.sol')
-const PlayerRankContract = artifacts.require('payout/PlayerRank.sol')
+const PlayerScoresContract = artifacts.require('payout/PlayerScores.sol')
 const chai = require('chai')
 const expect = chai.expect
 const BN = require('bn.js')
@@ -13,7 +13,7 @@ contract('Payout', function (accounts) {
   let player1TokenContract
   let player2TokenContract
   let player3TokenContract
-  let playerRankContract
+  let playerScoresContract
   const creatorAccount = accounts[0]
   const user1Account = accounts[1]
   const user2Account = accounts[2]
@@ -30,32 +30,28 @@ contract('Payout', function (accounts) {
     player2TokenContract = await PlayerTokenContract.new(thousandCoins, 2, 'NMR', 'Neymar Token', 'football', {from: creatorAccount})
     player3TokenContract = await PlayerTokenContract.new(thousandCoins, 3, 'PGB', 'Pogba Token', 'football', {from: creatorAccount})
 
-    playerRankContract = await PlayerRankContract.new(1, 'football', coinContract.address, {from: creatorAccount})
+    playerScoresContract = await PlayerScoresContract.new(1, 'football', coinContract.address, {from: creatorAccount})
 
     // transfer SVC to payout contract to be able to pay with it
-    await coinContract.transfer(playerRankContract.address, hundredCoins, {from: creatorAccount})
+    await coinContract.transfer(playerScoresContract.address, hundredCoins, {from: creatorAccount})
   }
 
   describe('update', () => {
     beforeEach(init)
 
-    it('should update ranks', async () => {
+    it('should update scores', async () => {
       const tokens = [player1TokenContract.address, player2TokenContract.address, player3TokenContract.address]
-      const ranks = [3, 2, 1]
       const scores = [30, 20, -5]
-      await playerRankContract.update(tokens, scores, ranks, {from: creatorAccount})
+      await playerScoresContract.update(tokens, scores, {from: creatorAccount})
 
-      const player1Score = await playerRankContract.scores.call(player1TokenContract.address, {from: user1Account})
+      const player1Score = await playerScoresContract.scores.call(player1TokenContract.address, {from: user1Account})
       expect(player1Score).to.eq.BN(30)
-      const player1Rank = await playerRankContract.ranks.call(player1TokenContract.address, {from: user1Account})
-      expect(player1Rank).to.eq.BN(3)
     })
 
     it('only owner should update winners', async () => {
       const tokens = [player1TokenContract.address, player2TokenContract.address, player3TokenContract.address]
-      const ranks = [3, 2, 1]
       const scores = [30, 20, -5]
-      await helpers.expectRevert(playerRankContract.update(tokens, scores, ranks, {from: user1Account}))
+      await helpers.expectRevert(playerScoresContract.update(tokens, scores, {from: user1Account}))
     })
   })
 

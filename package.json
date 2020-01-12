@@ -15,7 +15,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "web3": "~1.2.1"
+    "web3": "^1.2.4"
   },
   "devDependencies": {
     "bn-chai": "~1.0.1",
@@ -23,13 +23,13 @@
     "chai": "~4.2.0",
     "eslint": "^5.16.0",
     "eslint-config-standard": "^11.0.0",
-    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-import": "^2.20.0",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^3.1.0",
     "mocha": "^5.2.0",
-    "solhint": "^2.2.0",
+    "solhint": "^2.3.0",
     "solidity-coverage": "^0.6.7",
-    "truffle": "^5.0.36"
+    "truffle": "^5.1.8"
   }
 }

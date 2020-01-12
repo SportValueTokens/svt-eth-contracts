@@ -5,10 +5,10 @@ import "../tokens/SportValueCoin.sol";
 import "../tokens/Ownable.sol";
 
 /**
-* contract from which traders collect payouts.
-* owns the payout pool for a market in SVC
+*
+* Records current player scores for a market
 */
-contract PlayerRank is Ownable {
+contract PlayerScores is Ownable {
 
   // meta data
   string public constant version = '0.1';
@@ -17,8 +17,6 @@ contract PlayerRank is Ownable {
 
   SportValueCoin svc;
 
-  // latest rank of each token
-  mapping(address => uint32) public ranks;
   // latest score for each token
   mapping(address => uint32) public scores;
 
@@ -34,18 +32,16 @@ contract PlayerRank is Ownable {
   }
 
   /**
-  * Updates ranks for a number of tokens. The number of tokens to send is limited by gas limit!
+  * Updates scores for a number of tokens. The number of tokens to send is limited by gas limit!
   */
-  function update(address[] memory tokens, uint32[] memory _scores, uint32[] memory _ranks) public onlyOwner {
+  function update(address[] memory tokens, uint32[] memory _scores) public onlyOwner {
     // delete old data
     for (uint32 i = 0; i < tokens.length; i++) {
-      delete ranks[tokens[i]];
       delete scores[tokens[i]];
     }
 
     // record new data
     for (uint32 i = 0; i < tokens.length; i++) {
-      ranks[tokens[i]] = _ranks[i];
       scores[tokens[i]] = _scores[i];
     }
   }
