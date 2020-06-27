@@ -1,10 +1,9 @@
-pragma solidity 0.5.14;
+pragma solidity >=0.5.0 <0.6.0;
 
-import "../tokens/SportValueCoin.sol";
-import "../tokens/AssetToken.sol";
 import "../tokens/Ownable.sol";
 import "../tokens/ERC20.sol";
-import "../tokens/SafeMath.sol";
+import "../library/SafeMath.sol";
+import "../tokens/PlayerToken.sol";
 
 /**
 * This is a market making / liquidity contract inspired by Uniswap protocol but simplified.
@@ -20,9 +19,10 @@ contract SVCExchange is Ownable {
   // number of decimals we keep for price
   uint public constant DECIMALS = 4;
 
-  SportValueCoin public svc;
+  ERC20 public stableCoin;
 
-  mapping(address => uint) private svcBalanceOf;
+  // cash balance for each trading pair. key is the asset address
+  mapping(address => uint) private cashBalanceOf;
 
   event TokenPurchase(
     address indexed purchaser,
@@ -44,20 +44,20 @@ contract SVCExchange is Ownable {
   * Constructor
   * @param _market_id id of the market
   * @param _market name of the market e.g. football
-  * @param coinAddress address is the address of the deployed contract for SVC token
+  * @param coinAddress address is the address of the stable coin
   */
   constructor(uint32 _market_id, string memory _market, address coinAddress) public {
     market_id = _market_id;
     market = _market;
-    svc = SportValueCoin(coinAddress);
+    stableCoin = ERC20(coinAddress);
   }
 
   /**
-  * Returns balance of SVC for a given asset (token)
+  * Returns balance of stable coins for a given asset (token)
   * @param asset the address of the ERC20 token contract
   */
   function balanceOf(address asset) public view returns (uint) {
-    return svcBalanceOf[asset];
+    return cashBalanceOf[asset];
   }
 
   /**
@@ -66,15 +66,15 @@ contract SVCExchange is Ownable {
   * @param amount amount of tokens to trade
   * @param purchase true if a purchase, false if a sale
   */
-  function getAssetPrice(AssetToken asset, uint amount, bool purchase) public view returns (uint) {
+  function getAssetPrice(PlayerToken asset, uint amount, bool purchase) public view returns (uint) {
     uint assetBalance = asset.balanceOf(address(this));
-    uint coinBalance = svcBalanceOf[address(asset)];
+    uint cashBalance = cashBalanceOf[address(asset)];
     if (purchase) {
       assetBalance = assetBalance.sub(amount);
     } else {
       assetBalance = assetBalance.add(amount);
     }
-    uint price = coinBalance.mul(10 ** DECIMALS).div(assetBalance);
+    uint price = cashBalance.mul(10 ** DECIMALS).div(assetBalance);
     return price;
   }
 
@@ -84,78 +84,78 @@ contract SVCExchange is Ownable {
   * 2. call buy by providing enough gas and specifying the number of assets (18 decimals) he wishes to buy
   */
   function buy(address tokenAddr, uint amount) external {
-    AssetToken asset = AssetToken(tokenAddr);
+    PlayerToken asset = PlayerToken(tokenAddr);
     // how many SVC buyer needs to buy this asset
     uint price = getAssetPrice(asset, amount, true);
-    uint nbCoins = price.mul(amount).div(10 ** DECIMALS);
+    uint cashAmount = price.mul(amount).div(10 ** DECIMALS);
 
     // check how many assets the contract owns
     uint availableAssetBalance = asset.balanceOf(address(this));
     require(amount <= availableAssetBalance, "Not enough assets in stock");
 
     // get paid in SVC
-    require(svc.transferFrom(msg.sender, address(this), nbCoins), "Failed SVC transfer from buyer to SVCExchange");
+    require(stableCoin.transferFrom(msg.sender, address(this), cashAmount), "Failed stable coin transfer from buyer to SVCExchange");
 
-    // update virtual balance of SVC for the token
-    svcBalanceOf[tokenAddr] = svcBalanceOf[tokenAddr].add(nbCoins);
+    // update virtual balance of stable coin for the token
+    cashBalanceOf[tokenAddr] = cashBalanceOf[tokenAddr].add(cashAmount);
 
     // sending the tokens to the buyer
     require(asset.transfer(msg.sender, amount), "Failed asset transfer from exchange to buyer");
 
-    emit TokenPurchase(msg.sender, address(asset), amount, price, nbCoins);
+    emit TokenPurchase(msg.sender, address(asset), amount, price, cashAmount);
   }
 
   /**
   * The caller wants to sell assets for SVC coins. To do so, he needs to:
-  * 1. authorise SVCTokenSwap contract to transfer enough AssetToken from him
+  * 1. authorise SVCTokenSwap contract to transfer enough PlayerToken from him
   * 2. call sell by providing enough gas and specifying the number of assets (18 decimals) he wishes to sell
   */
   function sell(address tokenAddr, uint amount) external {
-    AssetToken asset = AssetToken(tokenAddr);
+    PlayerToken asset = PlayerToken(tokenAddr);
     // how many SVC buyer gets for that asset
     uint price = getAssetPrice(asset, amount, false);
-    uint nbCoins = price.mul(amount).div(10 ** DECIMALS);
+    uint cashAmount = price.mul(amount).div(10 ** DECIMALS);
 
     // check how many SVC the contract owns
-    uint availableSVCBalance = svcBalanceOf[tokenAddr];
-    require(nbCoins <= availableSVCBalance, "Not enough SVC in stock");
+    uint availableCashBalance = cashBalanceOf[tokenAddr];
+    require(cashAmount <= availableCashBalance, "Not enough cash in stock");
 
     // transfer assets to the contract
     require(asset.transferFrom(msg.sender, address(this), amount), "Failed asset transfer from seller to SVCExchange");
 
     // transfer SVC
-    require(svc.transfer(msg.sender, nbCoins), "Failed SVC transfer from SVCExchange to seller");
+    require(stableCoin.transfer(msg.sender, cashAmount), "Failed stable coin transfer from SVCExchange to seller");
 
     // update virtual balance of SVC for the token
-    svcBalanceOf[tokenAddr] = svcBalanceOf[tokenAddr].sub(nbCoins);
+    cashBalanceOf[tokenAddr] = cashBalanceOf[tokenAddr].sub(cashAmount);
 
-    emit TokenSale(msg.sender, address(asset), amount, price, nbCoins);
+    emit TokenSale(msg.sender, address(asset), amount, price, cashAmount);
   }
 
-  function addSVC(address assetAddr, uint nbCoins) public onlyOwner {
+  function addCash(address assetAddr, uint nbCoins) public onlyOwner {
     // transfer SVC to the contract
-    require(svc.transferFrom(msg.sender, address(this), nbCoins), "Failed SVC transfer from caller to SVCExchange");
+    require(stableCoin.transferFrom(msg.sender, address(this), nbCoins), "Failed SVC transfer from caller to SVCExchange");
     // update virtual balance of SVC for the token
-    svcBalanceOf[assetAddr] = svcBalanceOf[assetAddr].add(nbCoins);
+    cashBalanceOf[assetAddr] = cashBalanceOf[assetAddr].add(nbCoins);
   }
 
-  function removeSVC(address assetAddr, uint nbCoins) public onlyOwner {
-    uint coinBalance = svcBalanceOf[assetAddr];
+  function removeCash(address assetAddr, uint nbCoins) public onlyOwner {
+    uint coinBalance = cashBalanceOf[assetAddr];
     require(nbCoins <= coinBalance, "Not enough SVC owned by the contract");
     // transfer SVC to the sender
-    require(svc.transfer(msg.sender, nbCoins), "Failed SVC transfer to caller from SVCExchange");
+    require(stableCoin.transfer(msg.sender, nbCoins), "Failed SVC transfer to caller from SVCExchange");
     // update virtual balance of SVC for the token
-    svcBalanceOf[assetAddr] = svcBalanceOf[assetAddr].sub(nbCoins);
+    cashBalanceOf[assetAddr] = cashBalanceOf[assetAddr].sub(nbCoins);
   }
 
-  function addAssets(address tokenAddr, uint nbAssets) public onlyOwner {
-    AssetToken asset = AssetToken(tokenAddr);
+  function addAssets(address assetAddr, uint nbAssets) public onlyOwner {
+    PlayerToken asset = PlayerToken(assetAddr);
     // transfer assets to the contract
     require(asset.transferFrom(msg.sender, address(this), nbAssets), "Failed asset transfer from caller to SVCExchange");
   }
 
-  function removeAssets(address tokenAddr, uint nbAssets) public onlyOwner {
-    AssetToken asset = AssetToken(tokenAddr);
+  function removeAssets(address assetAddr, uint nbAssets) public onlyOwner {
+    PlayerToken asset = PlayerToken(assetAddr);
     uint assetBalance = asset.balanceOf(address(this));
     require(nbAssets <= assetBalance, "Not enough assets owned by the contract");
     // transfer assets to the sender
@@ -163,37 +163,28 @@ contract SVCExchange is Ownable {
   }
 
   /**
-  * Add initial liquidity for a new token
-  * The caller need to have authorised the contract to transfer SVC and Assets
-  */
-  function initToken(address tokenAddr, uint nbCoins, uint nbAssets) external onlyOwner {
-    addAssets(tokenAddr, nbAssets);
-    addSVC(tokenAddr, nbCoins);
-  }
-
-  /**
   * Add liquidity by keep existing ratio of assets because price depends on the ration. This should not modify price.
   * The caller need to have authorised the contract to transfer SVC and Assets
   */
   function addLiquidity(address tokenAddr, uint nbCoins) external onlyOwner {
-    AssetToken asset = AssetToken(tokenAddr);
+    PlayerToken asset = PlayerToken(tokenAddr);
     uint assetBalance = asset.balanceOf(address(this));
-    uint coinBalance = svcBalanceOf[tokenAddr];
-    uint nbAssetsToAdd = assetBalance.mul(nbCoins).div(coinBalance);
+    uint cashBalance = cashBalanceOf[tokenAddr];
+    uint nbAssetsToAdd = assetBalance.mul(nbCoins).div(cashBalance);
     addAssets(tokenAddr, nbAssetsToAdd);
-    addSVC(tokenAddr, nbCoins);
+    addCash(tokenAddr, nbCoins);
   }
 
   /**
-  * The owner may remove liquidity by getting back his SVC and AssetToken
+  * The owner may remove liquidity by getting back his SVC and PlayerToken
   */
   function removeLiquidity(address tokenAddr, uint nbCoins) external onlyOwner {
-    AssetToken asset = AssetToken(tokenAddr);
+    PlayerToken asset = PlayerToken(tokenAddr);
     uint assetBalance = asset.balanceOf(address(this));
-    uint coinBalance = svcBalanceOf[tokenAddr];
-    uint nbAssetsToRemove = assetBalance.mul(nbCoins).div(coinBalance);
+    uint cashBalance = cashBalanceOf[tokenAddr];
+    uint nbAssetsToRemove = assetBalance.mul(nbCoins).div(cashBalance);
     removeAssets(tokenAddr, nbAssetsToRemove);
-    removeSVC(tokenAddr, nbCoins);
+    removeCash(tokenAddr, nbCoins);
   }
 
 

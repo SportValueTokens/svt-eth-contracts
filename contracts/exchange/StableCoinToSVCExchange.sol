@@ -1,10 +1,9 @@
-pragma solidity 0.5.14;
+pragma solidity >=0.5.0 <0.6.0;
 
 import "../tokens/SportValueCoin.sol";
-import "../tokens/AssetToken.sol";
 import "../tokens/Ownable.sol";
 import "../tokens/ERC20.sol";
-import "../tokens/SafeMath.sol";
+import "../library/SafeMath.sol";
 
 /**
 * Fixed price SVC - ERC20 token exchange contract. Keeps quotase to prevent abuse.

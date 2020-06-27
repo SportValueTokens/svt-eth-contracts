@@ -1,7 +1,6 @@
-pragma solidity 0.5.14;
+pragma solidity >=0.5.0 <0.6.0;
 
-import "./StandardToken.sol";
-import "./ERC20.sol";
+import "../tokens/ERC20.sol";
 
 
 /**

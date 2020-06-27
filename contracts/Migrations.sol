@@ -1,4 +1,4 @@
-pragma solidity 0.5.14;
+pragma solidity >=0.5.0 <0.6.0;
 
 // This is needed by truffle framework
 contract Migrations {

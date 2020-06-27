@@ -1,10 +1,10 @@
-pragma solidity 0.5.14;
+pragma solidity >=0.5.0 <0.6.0;
 
 import "./Crowdsale.sol";
 import "../tokens/Ownable.sol";
 import "../tokens/SportValueCoin.sol";
 import "../tokens/ERC20.sol";
-import "../tokens/SafeERC20.sol";
+import "../library/SafeERC20.sol";
 
 
 /**

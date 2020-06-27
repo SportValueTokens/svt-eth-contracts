@@ -1,21 +1,41 @@
-pragma solidity 0.5.14;
+pragma solidity >=0.5.0 <0.6.0;
 
-import "./AssetToken.sol";
+import "./MintableToken.sol";
+import "./BurnableToken.sol";
 
 /**
 This token represents a tradeable player
 */
-contract PlayerToken is AssetToken {
+contract PlayerToken is MintableToken, BurnableToken {
   string public constant version = '0.2';
+  uint public constant decimals = 18;
+  string public symbol;
+  string public name;
+  uint32 public id;
+  string public market;
+
 
   /**
-  * Constructor for a new Player Token.
+  * Constructor for a new AssetToken.
   * @param initialBalance balance (18 decimals)
-  * @param _id number
-  * @param _name name of footballer
+  * @param _id asset number
+  * @param _name name
   * @param _symbol unique token symbol
-  * @param _market sport name (eg football)
+  * @param _market market name (eg football)
   */
-  constructor(uint initialBalance, uint32 _id, string memory _symbol, string memory _name, string memory _market)
-  AssetToken(initialBalance, _id, _symbol, _name, _market) public {}
+  constructor(uint initialBalance, uint32 _id, string memory _symbol, string memory _name, string memory _market) public {
+    id = _id;
+    symbol = _symbol;
+    name = _name;
+    market = _market;
+    _mint(msg.sender, initialBalance);
+  }
+
+  /**
+  * Allow owner to update the name
+  * @param _name new name
+  */
+  function setName(string memory _name) public onlyOwner {
+    name = _name;
+  }
 }
