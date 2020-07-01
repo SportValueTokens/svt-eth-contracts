@@ -15,6 +15,7 @@ contract('SVCExchange', function (accounts) {
   const creatorAccount = accounts[0]
   const user1Account = accounts[1]
   const user2Account = accounts[2]
+  const feesAccount = accounts[3]
   const DECIMALS = 18
   const oneCoin = new BN(1).mul(new BN(10).pow(new BN(DECIMALS)))
   const twoCoins = new BN(2).mul(new BN(10).pow(new BN(DECIMALS)))
@@ -30,7 +31,7 @@ contract('SVCExchange', function (accounts) {
     await stableCoin.transfer(user1Account, tenCoins, {from: creatorAccount})
     await stableCoin.transfer(user2Account, tenCoins, {from: creatorAccount})
 
-    exchange = await SVCExchange.new(1, 'football', stableCoin.address, {from: creatorAccount})
+    exchange = await SVCExchange.new(1, 'football', stableCoin.address, feesAccount, {from: creatorAccount})
 
     // transfer assets to user2
     asset1.transfer(user2Account, tenCoins, {from: creatorAccount})
@@ -284,6 +285,5 @@ contract('SVCExchange', function (accounts) {
       let price = await exchange.getAssetPrice.call(asset1.address, 0, true)
       expect(price).to.eq.BN(10000)
     })
-
   })
 })

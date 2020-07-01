@@ -23,6 +23,7 @@ contract SVCExchange is Ownable {
 
   // cash balance for each trading pair. key is the asset address
   mapping(address => uint) private cashBalanceOf;
+  address private feesAccount;
 
   event TokenPurchase(
     address indexed purchaser,
@@ -44,11 +45,13 @@ contract SVCExchange is Ownable {
   * Constructor
   * @param _market_id id of the market
   * @param _market name of the market e.g. football
+  * @param _feesAccount account to collect fees
   * @param coinAddress address is the address of the stable coin
   */
-  constructor(uint32 _market_id, string memory _market, address coinAddress) public {
+  constructor(uint32 _market_id, string memory _market, address coinAddress, address _feesAccount) public {
     market_id = _market_id;
     market = _market;
+    feesAccount = _feesAccount;
     stableCoin = ERC20(coinAddress);
   }
 
@@ -83,7 +86,7 @@ contract SVCExchange is Ownable {
   * 1. authorise SVCTokenSwap contract to transfer enough SVC from him
   * 2. call buy by providing enough gas and specifying the number of assets (18 decimals) he wishes to buy
   */
-  function buy(address tokenAddr, uint amount) external {
+  function buy(address tokenAddr, uint amount) public returns (uint) {
     PlayerToken asset = PlayerToken(tokenAddr);
     // how many SVC buyer needs to buy this asset
     uint price = getAssetPrice(asset, amount, true);
@@ -103,6 +106,8 @@ contract SVCExchange is Ownable {
     require(asset.transfer(msg.sender, amount), "Failed asset transfer from exchange to buyer");
 
     emit TokenPurchase(msg.sender, address(asset), amount, price, cashAmount);
+
+    return cashAmount;
   }
 
   /**
@@ -110,7 +115,7 @@ contract SVCExchange is Ownable {
   * 1. authorise SVCTokenSwap contract to transfer enough PlayerToken from him
   * 2. call sell by providing enough gas and specifying the number of assets (18 decimals) he wishes to sell
   */
-  function sell(address tokenAddr, uint amount) external {
+  function sell(address tokenAddr, uint amount) public returns (uint) {
     PlayerToken asset = PlayerToken(tokenAddr);
     // how many SVC buyer gets for that asset
     uint price = getAssetPrice(asset, amount, false);
@@ -130,6 +135,8 @@ contract SVCExchange is Ownable {
     cashBalanceOf[tokenAddr] = cashBalanceOf[tokenAddr].sub(cashAmount);
 
     emit TokenSale(msg.sender, address(asset), amount, price, cashAmount);
+
+    return cashAmount;
   }
 
   function addCash(address assetAddr, uint nbCoins) public onlyOwner {
@@ -186,6 +193,5 @@ contract SVCExchange is Ownable {
     removeAssets(tokenAddr, nbAssetsToRemove);
     removeCash(tokenAddr, nbCoins);
   }
-
 
 }
